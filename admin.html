@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ผู้ดูแลระบบ — ระบบฐานข้อมูลผู้ปฏิบัติงานสังคมสงเคราะห์ประเทศไทย</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="enhance.css">
+<meta name="theme-color" content="#16325C">
+<link rel="icon" href="logo.png">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="flag-band"></div>
+<main style="padding:0;">
+<div>
+
+    <!-- ============ LOGIN GATE ============ -->
+    <div id="adminLoginView" class="login-split">
+      <div class="login-left">
+        <div class="brand">
+          <img src="logo.png" alt="ตราสภาวิชาชีพสังคมสงเคราะห์">
+          <div><b>ระบบฐานข้อมูลผู้ปฏิบัติงานสังคมสงเคราะห์ประเทศไทย</b><span>แผงควบคุมผู้ดูแลระบบ (Back Office)</span></div>
+        </div>
+        <div>
+          <h1>พื้นที่ทำงานสำหรับเจ้าหน้าที่สภาวิชาชีพสังคมสงเคราะห์</h1>
+          <p>เข้าถึงได้เฉพาะเจ้าหน้าที่ที่ได้รับสิทธิ์ ทุกการเข้าใช้งานและการแก้ไขข้อมูลถูกบันทึกไว้ในบันทึกการใช้งาน (Audit Log)</p>
+        </div>
+        <small><a href="index.html" style="color:var(--sky);">← กลับหน้าหลัก</a> · <a href="register.html" style="color:var(--sky);">สำหรับผู้ปฏิบัติงาน</a></small>
+      </div>
+      <div class="login-right">
+          <h2>เข้าสู่ระบบผู้ดูแล</h2>
+
+          <div id="thaidStaffBlock" style="display:none;">
+          <button class="btn btn-thaid" id="thaidStaffLoginBtn">เข้าสู่ระบบด้วย ThaiD</button>
+          <div id="thaidStaffAlert" class="mt-8"></div>
+          <p class="text-sm text-soft mt-8">ใช้ได้เฉพาะเจ้าหน้าที่ที่ผูกเลขบัตรประชาชนไว้กับบัญชีล่วงหน้าโดย superadmin เท่านั้น</p>
+          <div class="or">หรือ</div>
+          </div>
+
+          <!-- ขั้นที่ 1: ชื่อผู้ใช้ + รหัสผ่าน -->
+          <div id="adminPasswordStep">
+            <div id="adminLoginAlert"></div>
+            <div class="field"><label>ชื่อผู้ใช้</label><input type="text" id="adminUsername"></div>
+            <div class="field"><label>รหัสผ่าน</label><input type="password" id="adminPassword"></div>
+            <button class="btn btn-navy btn-block" id="adminLoginBtn">เข้าสู่ระบบด้วยรหัสผ่าน</button>
+            <p class="text-sm text-soft mt-16">บัญชีเริ่มต้นถูกสร้างไว้ตอนติดตั้งระบบ (ดูใน Apps Script Execution log) กรุณาเปลี่ยนรหัสผ่านทันทีหลังติดตั้ง</p>
+          </div>
+
+          <!-- ขั้นที่ 2: กรอกรหัส OTP ที่ส่งไปยังอีเมล (แสดงเฉพาะเมื่อบัญชีเปิดใช้งาน MFA แล้ว) -->
+          <div id="adminOtpStep" style="display:none;">
+            <div id="adminOtpAlert"></div>
+            <p class="text-sm">ระบบส่งรหัส OTP ไปยังอีเมล <strong id="adminOtpMaskedEmail"></strong> แล้ว (อายุรหัส 5 นาที)</p>
+            <div class="field"><label>รหัส OTP</label><input type="text" id="adminOtpInput" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="กรอกรหัส 6 หลักจากอีเมล" style="font-family:var(--font-mono); font-size:1.4rem; letter-spacing:.4em; text-align:center;"></div>
+            <button class="btn btn-navy btn-block" id="adminVerifyOtpBtn">ยืนยันรหัส OTP</button>
+            <button class="btn btn-ghost btn-sm btn-block mt-8" id="adminBackToPasswordBtn">← กลับไปกรอกรหัสผ่านใหม่</button>
+          </div>
+      </div>
+    </div>
+
+    <!-- ============ ADMIN APP ============ -->
+    <div id="adminAppView" class="admin-shell" style="display:none;">
+      <aside class="admin-sidebar">
+        <div class="sb-brand"><img src="logo.png" alt=""><div><b>ระบบฐานข้อมูลผู้ปฏิบัติงาน</b><span>Back Office</span></div></div>
+        <nav class="sb-nav tabs" style="border:0;margin:0;">
+        <button class="tab-btn active" data-tab="tabDashboard" data-perm="dashboard">ภาพรวม</button>
+        <button class="tab-btn" data-tab="tabReports" data-perm="reports">รายงาน</button>
+        <button class="tab-btn" data-tab="tabPeople" data-perm="people_view">ข้อมูลผู้ปฏิบัติงาน</button>
+        <button class="tab-btn" id="tabBtnDiscipline" data-tab="tabDiscipline" data-perm="discipline_view">วินัย/จริยธรรม</button>
+        <button class="tab-btn" data-tab="tabAgencies" data-perm="agencies">หน่วยงาน</button>
+        <button class="tab-btn" data-tab="tabAudit" data-perm="audit">บันทึกการใช้งาน (Audit Log)</button>
+        <button class="tab-btn" id="tabBtnAdmins" data-tab="tabAdmins" data-perm="@superadmin">จัดการผู้ดูแลระบบ</button>
+        <button class="tab-btn" data-tab="tabAccount">บัญชีของฉัน</button>
+        </nav>
+        <div class="sb-user"><div class="nm"><b id="adminWelcome"></b><span>เข้าสู่ระบบอยู่</span></div><button class="sb-logout" onclick="adminLogout()">ออกจากระบบ</button></div>
+      </aside>
+      <div class="admin-main">
+      <div class="admin-topbar"><button type="button" onclick="document.body.classList.toggle('nav-open')" aria-label="เมนู">☰</button><b>Back Office</b></div>
+
+      <!-- ---------- TAB: Dashboard (ฉบับเต็มสำหรับเจ้าหน้าที่) ---------- -->
+      <div id="tabDashboard" class="tab-panel active">
+        <div class="grid grid-4" id="adminKpi">
+          <div class="card kpi"><div class="num">-</div><div class="label">ผู้ปฏิบัติงานทั้งหมด</div></div>
+          <div class="card kpi accent-green"><div class="num">-</div><div class="label">อัตรามีใบอนุญาต</div></div>
+          <div class="card kpi accent-gold"><div class="num">-</div><div class="label">ใบอนุญาตใกล้หมดอายุ</div></div>
+          <div class="card kpi accent-red"><div class="num">-</div><div class="label">กรณีวินัย</div></div>
+        </div>
+        <p class="text-sm text-soft mt-8" id="momText">กำลังคำนวณแนวโน้ม...</p>
+        <div id="kpiComparison" class="mt-16"></div>
+
+        <div class="grid mt-16" >
+          <div class="card">
+            <h3 style="margin-top:0;">แผนที่ความหนาแน่นผู้ปฏิบัติงานรายจังหวัด (คลิกเพื่อกรองตาราง)</h3>
+            <div id="adminMap" style="min-height:480px;"></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0;">อันดับจังหวัด</h3>
+            <div class="flex gap-8 mb-0" style="margin-bottom:8px;">
+              <button class="btn btn-ghost btn-sm rank-toggle active" data-rank="top">มากสุด 5</button>
+              <button class="btn btn-ghost btn-sm rank-toggle" data-rank="bottom">น้อยสุด 5</button>
+            </div>
+            <div id="provinceRankingList"></div>
+            <h3 class="mt-24">หน่วยงานที่มีผู้ปฏิบัติงานมากสุด</h3>
+            <div id="agencyRankingList"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-2 mt-16">
+          <div class="card chart-card">
+            <h3 style="margin-top:0;">แยกตามประเภทตำแหน่งงาน</h3>
+            <canvas id="chartPosition" height="220"></canvas>
+          </div>
+          <div class="card chart-card">
+            <h3 style="margin-top:0;">แยกตามประเภทหน่วยงาน</h3>
+            <canvas id="chartAgency" height="220"></canvas>
+          </div>
+        </div>
+        <div class="grid grid-2 mt-16">
+          <div class="card chart-card">
+            <h3 style="margin-top:0;">แยกตามสาขาความเชี่ยวชาญ</h3>
+            <canvas id="chartSpecialization" height="220"></canvas>
+          </div>
+          <div class="card chart-card">
+            <h3 style="margin-top:0;">แนวโน้มการลงทะเบียนใหม่ (12 เดือนล่าสุด)</h3>
+            <canvas id="chartTrend" height="220"></canvas>
+          </div>
+        </div>
+
+        <div class="card mt-16">
+          <h3 style="margin-top:0;">รายชื่อที่ใบอนุญาตใกล้หมดอายุภายใน 90 วัน</h3>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>รหัสประจำตัว</th><th>ชื่อ-สกุล</th><th>จังหวัด</th><th>วันหมดอายุ</th></tr></thead>
+              <tbody id="expiringTableBody"><tr><td colspan="4" class="text-soft">กำลังโหลด...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------- TAB: รายงาน (Standard Reports) ---------- -->
+      <div id="tabReports" class="tab-panel">
+        <p class="text-sm text-soft">เลือกประเภทรายงานที่ต้องการดู — ข้อมูลคำนวณจากฐานข้อมูลปัจจุบันแบบเรียลไทม์</p>
+        <div class="flex gap-12" style="flex-wrap:wrap; align-items:center;">
+          <select id="reportSelect" style="max-width:420px;">
+            <option value="overview">1. สรุปภาพรวมทั่วประเทศ</option>
+            <option value="area">2. รายงานเชิงพื้นที่ (จังหวัด/ภูมิภาค)</option>
+            <option value="agency">3. รายงานตามประเภทหน่วยงาน/สังกัด</option>
+            <option value="position">4. รายงานตามประเภทตำแหน่งงาน</option>
+            <option value="license">5. รายงานสถานะใบอนุญาต</option>
+            <option value="membership">6. รายงานสถานะสมาชิกภาพ</option>
+            <option value="specialization">7. รายงานความเชี่ยวชาญ/สาขาการปฏิบัติงาน</option>
+            <option value="education">8. รายงานวุฒิการศึกษา</option>
+            <option value="discipline">9. รายงานประวัติวินัย/จริยธรรม (จำกัดสิทธิ์)</option>
+            <option value="trend">10. รายงานแนวโน้มเชิงเวลา (Trend Analysis)</option>
+          </select>
+          <button class="btn btn-outline btn-sm" id="exportReportBtn">⬇ ส่งออกเป็น Excel</button>
+        </div>
+        <p class="text-sm text-soft mt-8">รายงานที่ 11 (การใช้งานระบบ/Audit) ดูได้ที่แท็บ "บันทึกการใช้งาน (Audit Log)"</p>
+        <div id="reportContent" class="mt-16"></div>
+      </div>
+
+      <!-- ---------- TAB: People ---------- -->
+      <div id="tabPeople" class="tab-panel">
+        <div class="flex-between mt-8">
+          <div class="people-filter-wrap"><input type="text" id="peopleFilter" placeholder="ชื่อ / รหัส / เลขที่ใบอนุญาต / เลขบัตร 4 หลักท้าย" style="max-width:320px;"><span id="peopleCount" class="text-sm text-soft" role="status" aria-live="polite"></span></div>
+          <div class="flex gap-8">
+            <button class="btn btn-ghost btn-sm" id="importTemplateBtn" type="button">⬇ ดาวน์โหลดแม่แบบ Excel</button>
+            <button class="btn btn-outline btn-sm" id="importPeopleBtn">⬆ นำเข้าจาก Excel</button>
+            <input type="file" id="importPeopleFile" accept=".xlsx,.xls" style="display:none;">
+            <button class="btn btn-primary btn-sm" id="addPersonBtn" onclick="openPersonForm(null)">+ เพิ่มผู้ปฏิบัติงาน</button>
+          </div>
+        </div>
+
+        <!-- แผงแสดงตัวอย่าง/ความคืบหน้าการนำเข้าจาก Excel -->
+        <div id="importPreviewWrap" class="card mt-16" style="display:none;">
+          <h3 style="margin-top:0;">นำเข้าสมาชิกจากไฟล์ Excel</h3>
+          <p class="text-sm text-soft">
+            รองรับไฟล์รูปแบบ "ข้อมูลสมาชิกสภาวิชาชีพสังคมสงเคราะห์.xlsx" (กดปุ่ม "ดาวน์โหลดแม่แบบ Excel" เพื่อรับไฟล์ตัวอย่างพร้อมคำอธิบายคอลัมน์) (คอลัมน์: เลขที่สมัครสมาชิก, เลขใบอนุญาต, เลขบัตรประชาชน, ชื่อ, นามสกุล, วันที่เริ่ม/สิ้นสุดการสมัคร, ประเภทที่สมัคร, สถานะ)
+            ระเบียนที่นำเข้าจะยังไม่มีรหัสผ่าน — เจ้าของข้อมูลไปเข้าสู่ระบบด้วย ThaiD หรือกดปุ่ม "ดึงข้อมูลจากสภาฯ" ตอนลงทะเบียนเองภายหลังเพื่อกรอกข้อมูลเพิ่มเติมและตั้งรหัสผ่าน
+          </p>
+          <div id="importSummaryText" class="alert alert-info"></div>
+          <div id="importProgressWrap" style="display:none;">
+            <div style="background:var(--line); border-radius:6px; height:10px; overflow:hidden;">
+              <div id="importProgressBar" style="background:var(--navy); height:100%; width:0%; transition:width .2s;"></div>
+            </div>
+            <p class="text-sm text-soft mt-8" id="importProgressText"></p>
+          </div>
+          <div id="importResultText" class="mt-16"></div>
+          <div class="flex gap-12 mt-16">
+            <button class="btn btn-primary" id="importConfirmBtn">เริ่มนำเข้า</button>
+            <button class="btn btn-ghost" id="importCancelBtn">ยกเลิก</button>
+          </div>
+        </div>
+
+        <div class="card mt-16" id="councilPullCard">
+          <div class="flex-between" style="flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3 style="margin:0 0 4px;">ฟังก์ชัน “ดึงข้อมูลจากสภาฯ”</h3>
+              <p class="text-sm text-soft" style="margin:0;" id="councilPullText">กำลังตรวจสอบสถานะ...</p>
+            </div>
+            <button class="btn btn-outline btn-sm" id="councilPullBtn" disabled>-</button>
+          </div>
+          <p class="text-sm text-soft mt-8 mb-0">ค่าเริ่มต้นคือปิด เมื่อปิด ปุ่ม “ดึงข้อมูลจากสภาฯ” ในหน้าลงทะเบียนจะถูกซ่อน และระบบหลังบ้านปฏิเสธคำขอดึงข้อมูลด้วย ให้กดเปิดเมื่อเชื่อมต่อข้อมูลสภาฯ ได้แล้ว</p>
+        </div>
+
+        <div class="card mt-16" id="manualSettingCard">
+          <h3 style="margin:0 0 4px;">คู่มือผู้ใช้งานทั่วไป</h3>
+          <p class="text-sm text-soft" style="margin:0 0 12px;" id="manualSettingText">กำลังตรวจสอบสถานะ...</p>
+          <div class="form-group"><label for="manualTitle">ชื่อที่แสดงบนปุ่ม (ไม่บังคับ)</label><input type="text" id="manualTitle" maxlength="120" placeholder="คู่มือการใช้งานสำหรับผู้ปฏิบัติงาน"></div>
+          <div class="form-group"><label for="manualUrl">วิธีที่ 1: วางลิงก์คู่มือ (เช่น ลิงก์แชร์ Google Drive)</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;"><input type="url" id="manualUrl" style="flex:1; min-width:220px;" placeholder="https://..."><button class="btn btn-primary btn-sm" id="manualSaveLinkBtn">บันทึกลิงก์</button></div></div>
+          <div class="form-group"><label for="manualFile">วิธีที่ 2: แนบไฟล์ PDF หรือ DOCX (ไม่เกิน 5 MB)</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;"><input type="file" id="manualFile" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"><button class="btn btn-outline btn-sm" id="manualUploadBtn">อัปโหลด</button></div></div>
+          <button class="btn btn-outline btn-sm" id="manualClearBtn" style="color:var(--red-bad);">ลบคู่มือ (ซ่อนปุ่มจากหน้าเว็บ)</button>
+          <p class="text-sm text-soft mt-8 mb-0">ไฟล์ที่แนบจะถูกเก็บใน Google Drive ของเจ้าของสคริปต์และตั้งเป็น “ทุกคนที่มีลิงก์ดูได้” การบันทึกใหม่จะแทนที่ของเดิม</p>
+        </div>
+
+        <div class="table-scroll mt-16">
+          <table class="data-table">
+            <thead><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ตำแหน่ง</th><th>หน่วยงาน</th><th>จังหวัด</th><th>สมาชิกภาพ</th><th>ใบอนุญาต</th><th></th></tr></thead>
+            <tbody id="peopleTableBody"><tr><td colspan="8" class="text-soft">กำลังโหลด...</td></tr></tbody>
+          </table>
+        </div>
+
+        <!-- Person edit modal (inline panel) -->
+        <div id="personFormWrap" style="display:none;" class="card mt-16 side-panel">
+          <h3 id="personFormTitle" style="margin-top:0;">เพิ่มผู้ปฏิบัติงาน</h3>
+          <div id="personFormAlert"></div>
+          <form id="personForm">
+            <input type="hidden" name="PersonID">
+            <h4 style="margin-top:0;">ข้อมูลบุคคล</h4>
+            <div class="form-grid">
+              <div class="field"><label>คำนำหน้า</label>
+                <select name="Prefix" id="adm_prefixSelect">
+                  <option value="นาย">นาย</option><option value="นาง">นาง</option><option value="นางสาว">นางสาว</option><option value="อื่นๆ">อื่นๆ</option>
+                </select>
+                <input type="text" id="adm_prefixOther" placeholder="โปรดระบุคำนำหน้า" style="display:none; margin-top:8px;">
+              </div>
+              <div class="field"><label>ชื่อ *</label><input type="text" name="FirstName" required></div>
+              <div class="field"><label>นามสกุล *</label><input type="text" name="LastName" required></div>
+              <div class="field"><label>เลขบัตรประชาชน *</label><input type="text" name="NationalID" maxlength="13" required></div>
+              <div class="field"><label>เบอร์โทรศัพท์</label><input type="tel" name="Phone"></div>
+              <div class="field"><label>อีเมล</label><input type="email" name="Email"></div>
+            </div>
+
+            <h4>ที่อยู่ตามทะเบียนบ้าน</h4>
+            <div class="form-grid">
+              <div class="field"><label>บ้านเลขที่</label><input type="text" name="House_No"></div>
+              <div class="field"><label>หมู่บ้าน</label><input type="text" name="House_Village"></div>
+              <div class="field"><label>อาคาร/ชั้น</label><input type="text" name="House_Building"></div>
+              <div class="field"><label>ซอย</label><input type="text" name="House_Soi"></div>
+              <div class="field"><label>ถนน</label><input type="text" name="House_Road"></div>
+            </div>
+            <div class="form-grid">
+              <div class="field"><label>จังหวัด</label><select name="House_Province" class="addr-province" data-group="House"><option value="">เลือกจังหวัด</option></select></div>
+              <div class="field"><label>อำเภอ/เขต</label><select name="House_District" class="addr-district" data-group="House"><option value="">เลือกจังหวัดก่อน</option></select></div>
+              <div class="field"><label>ตำบล/แขวง</label><select name="House_Subdistrict" class="addr-subdistrict" data-group="House"><option value="">เลือกอำเภอก่อน</option></select></div>
+              <div class="field"><label>รหัสไปรษณีย์</label><input type="text" name="House_Zipcode" class="addr-zipcode" data-group="House" readonly></div>
+            </div>
+
+            <h4>
+              ที่อยู่ปัจจุบัน
+              <label class="text-sm text-soft" style="font-weight:400; margin-left:12px;">
+                <input type="checkbox" id="adm_sameAsHouse"> ใช้ที่อยู่เดียวกับทะเบียนบ้าน
+              </label>
+            </h4>
+            <div class="form-grid">
+              <div class="field"><label>บ้านเลขที่</label><input type="text" name="Current_No"></div>
+              <div class="field"><label>หมู่บ้าน</label><input type="text" name="Current_Village"></div>
+              <div class="field"><label>อาคาร/ชั้น</label><input type="text" name="Current_Building"></div>
+              <div class="field"><label>ซอย</label><input type="text" name="Current_Soi"></div>
+              <div class="field"><label>ถนน</label><input type="text" name="Current_Road"></div>
+            </div>
+            <div class="form-grid">
+              <div class="field"><label>จังหวัด</label><select name="Current_Province" class="addr-province" data-group="Current"><option value="">เลือกจังหวัด</option></select></div>
+              <div class="field"><label>อำเภอ/เขต</label><select name="Current_District" class="addr-district" data-group="Current"><option value="">เลือกจังหวัดก่อน</option></select></div>
+              <div class="field"><label>ตำบล/แขวง</label><select name="Current_Subdistrict" class="addr-subdistrict" data-group="Current"><option value="">เลือกอำเภอก่อน</option></select></div>
+              <div class="field"><label>รหัสไปรษณีย์</label><input type="text" name="Current_Zipcode" class="addr-zipcode" data-group="Current" readonly></div>
+            </div>
+
+            <h4>วุฒิการศึกษา</h4>
+            <div class="form-grid">
+              <div class="field"><label>ระดับการศึกษา</label>
+                <select name="EducationLevel" id="adm_eduLevelSelect"><option value="ปริญญาตรี">ปริญญาตรี</option><option value="ปริญญาโท">ปริญญาโท</option><option value="ปริญญาเอก">ปริญญาเอก</option><option value="อนุปริญญา/ปวส.">อนุปริญญา/ปวส.</option><option value="อื่นๆ">อื่นๆ</option></select>
+                <input type="text" id="adm_eduLevelOther" placeholder="โปรดระบุระดับการศึกษา" style="display:none; margin-top:8px;">
+              </div>
+              <div class="field"><label>สาขาวิชา</label><input type="text" name="EducationField"></div>
+              <div class="field"><label>สถาบัน</label>
+                <input type="text" name="EducationInstitute" list="universityListAdm" placeholder="พิมพ์ค้นหา หรือระบุชื่อสถาบันใหม่ได้">
+                <datalist id="universityListAdm"></datalist>
+              </div>
+              <div class="field"><label>ปีที่จบการศึกษา</label><input type="text" name="EducationYear"></div>
+            </div>
+
+            <h4>การทำงาน</h4>
+            <div class="form-grid">
+              <div class="field"><label>ประเภทตำแหน่งงาน</label>
+                <select name="PositionType" id="adm_positionTypeSelect">
+                  <option>นักสังคมสงเคราะห์</option>
+                  <option>ผู้ช่วยนักสังคมสงเคราะห์</option>
+                  <option>นักพัฒนาสังคม</option>
+                  <option>นักพัฒนาชุมชน</option>
+                  <option value="อื่นๆ">อื่นๆ</option>
+                </select>
+                <input type="text" id="adm_positionTypeOther" placeholder="โปรดระบุประเภทตำแหน่งงาน" style="display:none; margin-top:8px;">
+              </div>
+              <div class="field"><label>ระดับตำแหน่ง</label>
+                <select name="PositionLevel">
+                  <option value="">ไม่ระบุ</option>
+                  <option value="ปฏิบัติการ">ปฏิบัติการ</option>
+                  <option value="ชำนาญการ">ชำนาญการ</option>
+                  <option value="ชำนาญการพิเศษ">ชำนาญการพิเศษ</option>
+                  <option value="เชี่ยวชาญ">เชี่ยวชาญ</option>
+                  <option value="ผู้ทรงคุณวุฒิ">ผู้ทรงคุณวุฒิ</option>
+                </select>
+              </div>
+              <div class="field"><label>สังกัด</label>
+                <select name="Sangkad" class="agency-sangkad" id="adm_sangkadSelect"><option value="">เลือกสังกัด</option></select>
+              </div>
+              <div class="field"><label>กรม</label>
+                <select name="Department" class="agency-department" id="adm_departmentSelect"><option value="">เลือกสังกัดก่อน</option></select>
+                <input type="text" id="adm_departmentOther" class="department-other" placeholder="โปรดระบุชื่อกรม" style="display:none; margin-top:8px;">
+              </div>
+              <div class="field"><label>ประเภทหน่วยงาน</label>
+                <select name="AgencyType" class="agency-type"><option>ภาครัฐ</option><option>ท้องถิ่น</option><option>เอกชน</option><option>NGO</option><option>อื่นๆ</option></select>
+              </div>
+              <div class="field"><label>ชื่อหน่วยงานที่ปฏิบัติงาน</label>
+                <input type="text" name="AgencyName" placeholder="เช่น สำนักงานพัฒนาสังคมและความมั่นคงของมนุษย์จังหวัดเชียงใหม่">
+              </div>
+              <div class="field"><label>ความเชี่ยวชาญ</label><input type="text" name="Specializations"></div>
+            </div>
+
+            <h4>
+              ที่ทำงาน
+              <label class="text-sm text-soft" style="font-weight:400; margin-left:12px;">
+                <input type="checkbox" id="adm_sameAsCurrentWork"> ใช้ที่อยู่เดียวกับที่อยู่ปัจจุบัน
+              </label>
+            </h4>
+            <div class="form-grid">
+              <div class="field"><label>บ้านเลขที่</label><input type="text" name="Work_No"></div>
+              <div class="field"><label>หมู่บ้าน</label><input type="text" name="Work_Village"></div>
+              <div class="field"><label>อาคาร/ชั้น</label><input type="text" name="Work_Building"></div>
+              <div class="field"><label>ซอย</label><input type="text" name="Work_Soi"></div>
+              <div class="field"><label>ถนน</label><input type="text" name="Work_Road"></div>
+            </div>
+            <div class="form-grid">
+              <div class="field"><label>จังหวัด</label><select name="Work_Province" class="addr-province" data-group="Work"><option value="">เลือกจังหวัด</option></select></div>
+              <div class="field"><label>อำเภอ/เขต</label><select name="Work_District" class="addr-district" data-group="Work"><option value="">เลือกจังหวัดก่อน</option></select></div>
+              <div class="field"><label>ตำบล/แขวง</label><select name="Work_Subdistrict" class="addr-subdistrict" data-group="Work"><option value="">เลือกอำเภอก่อน</option></select></div>
+              <div class="field"><label>รหัสไปรษณีย์</label><input type="text" name="Work_Zipcode" class="addr-zipcode" data-group="Work" readonly></div>
+            </div>
+
+            <h4>สมาชิกภาพ/ใบอนุญาต/สถานะ</h4>
+            <div class="form-grid">
+              <div class="field"><label>เลขที่สมาชิก</label><input type="text" name="MembershipNumber"></div>
+              <div class="field"><label>สถานะสมาชิกภาพ</label>
+                <select name="MembershipStatus"><option value="active">ปกติ</option><option value="ended">สิ้นสุด</option><option value="none">ไม่เป็นสมาชิก</option></select>
+              </div>
+              <div class="field"><label>วันหมดอายุสมาชิกภาพ</label><input type="date" name="MembershipExpireDate"></div>
+
+              <div class="field"><label>เลขที่ใบอนุญาต</label><input type="text" name="LicenseNumber"></div>
+              <div class="field"><label>สถานะใบอนุญาต</label>
+                <select name="LicenseStatus"><option value="active">ปกติ</option><option value="expired">หมดอายุ</option><option value="suspended">ถูกพักใช้</option><option value="revoked">ถูกเพิกถอน</option><option value="none">ไม่มี</option></select>
+              </div>
+              <div class="field"><label>วันที่ได้รับใบอนุญาต</label><input type="date" name="LicenseIssueDate"></div>
+              <div class="field"><label>วันหมดอายุใบอนุญาต</label><input type="date" name="LicenseExpireDate"></div>
+              <div class="field" style="grid-column:1/-1;"><label>หมายเหตุการเปลี่ยนแปลงใบอนุญาต (ไม่บังคับ)</label><input type="text" name="LicenseChangeNote" maxlength="300" placeholder="เช่น ต่ออายุตามคำขอเลขที่ ... / พักใช้ตามมติคณะกรรมการ ครั้งที่ ..."><div class="hint">บันทึกไว้ในประวัติใบอนุญาตเมื่อเลขที่ วันที่ หรือสถานะใบอนุญาตเปลี่ยน</div></div>
+
+              <div class="field"><label>สถานะ</label>
+                <select name="Status"><option value="active">ใช้งาน</option><option value="deleted">ปิดใช้งาน</option></select>
+              </div>
+            </div>
+            <h4>ประวัติใบอนุญาต</h4>
+            <div id="licenseHistoryBox"></div>
+            <h4>เพิ่มประวัติการทำงาน (ไม่บังคับ)</h4>
+            <div class="form-grid">
+              <div class="field"><label>หน่วยงาน</label><input type="text" id="whAgency"></div>
+              <div class="field"><label>ตำแหน่ง</label><input type="text" id="whPosition"></div>
+              <div class="field"><label>เริ่มงาน</label><input type="date" id="whStart"></div>
+              <div class="field"><label>สิ้นสุด</label><input type="date" id="whEnd"></div>
+            </div>
+            <div class="flex gap-12 mt-16">
+              <button type="submit" class="btn btn-primary">บันทึก</button>
+              <button type="button" class="btn btn-ghost" onclick="closePersonForm()">ยกเลิก</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ---------- TAB: Discipline ---------- -->
+      <div id="tabDiscipline" class="tab-panel">
+        <div class="flex-between mt-8">
+          <p class="text-soft text-sm mb-0">บันทึกและติดตามกรณีการดำเนินการทางวินัยของผู้ประกอบวิชาชีพ (จำกัดสิทธิ์เฉพาะผู้ดูแลระบบ)</p>
+          <button class="btn btn-primary btn-sm" id="addDisciplineBtn" onclick="openDisciplineForm()">+ เพิ่มบันทึก</button>
+        </div>
+        <div class="table-scroll mt-16">
+          <table class="data-table">
+            <thead><tr><th>รหัสประจำตัว</th><th>วันที่</th><th>ประเภทกรณี</th><th>บทลงโทษ</th><th>สถานะคดี</th></tr></thead>
+            <tbody id="disciplineTableBody"><tr><td colspan="5" class="text-soft">กำลังโหลด...</td></tr></tbody>
+          </table>
+        </div>
+        <div id="disciplineFormWrap" style="display:none;" class="card mt-16 side-panel">
+          <h3 style="margin-top:0;">เพิ่มบันทึกวินัย/จริยธรรม</h3>
+          <form id="disciplineForm">
+            <div class="form-grid">
+              <div class="field"><label>รหัสประจำตัวผู้ปฏิบัติงาน (PersonID) *</label><input type="text" name="PersonID" required placeholder="เช่น P00001"></div>
+              <div class="field"><label>วันที่เกิดกรณี</label><input type="date" name="CaseDate"></div>
+              <div class="field"><label>ประเภทกรณี</label><input type="text" name="CaseType"></div>
+              <div class="field"><label>บทลงโทษ</label><input type="text" name="PenaltyType"></div>
+              <div class="field"><label>สถานะคดี</label>
+                <select name="CaseStatus"><option value="อยู่ระหว่างพิจารณา">อยู่ระหว่างพิจารณา</option><option value="สิ้นสุด">สิ้นสุด</option></select>
+              </div>
+            </div>
+            <div class="field"><label>รายละเอียด</label><textarea name="Description"></textarea></div>
+            <div class="flex gap-12">
+              <button type="submit" class="btn btn-primary">บันทึก</button>
+              <button type="button" class="btn btn-ghost" onclick="document.getElementById('disciplineFormWrap').style.display='none'">ยกเลิก</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ---------- TAB: Agencies ---------- -->
+      <div id="tabAgencies" class="tab-panel">
+        <div class="flex-between mt-8">
+          <p class="text-soft text-sm mb-0">จัดการรายชื่อหน่วยงาน/สังกัด</p>
+          <button class="btn btn-primary btn-sm" onclick="openAgencyForm()">+ เพิ่มหน่วยงาน</button>
+        </div>
+        <div class="table-scroll mt-16">
+          <table class="data-table">
+            <thead><tr><th>สังกัด</th><th>กรม</th><th>ชื่อหน่วยงาน</th><th>ประเภท</th></tr></thead>
+            <tbody id="agenciesTableBody"><tr><td colspan="4" class="text-soft">กำลังโหลด...</td></tr></tbody>
+          </table>
+        </div>
+        <div id="agencyFormWrap" style="display:none;" class="card mt-16 side-panel">
+          <h3 style="margin-top:0;">เพิ่ม/แก้ไขหน่วยงาน</h3>
+          <form id="agencyForm">
+            <input type="hidden" name="AgencyID">
+            <div class="form-grid">
+              <div class="field"><label>สังกัด</label>
+                <select name="Sangkad" class="agency-sangkad" id="agf_sangkadSelect"><option value="">เลือกสังกัด</option></select>
+              </div>
+              <div class="field"><label>กรม</label>
+                <select name="Department" class="agency-department" id="agf_departmentSelect"><option value="">เลือกสังกัดก่อน</option></select>
+                <input type="text" id="agf_departmentOther" class="department-other" placeholder="โปรดระบุชื่อกรม" style="display:none; margin-top:8px;">
+              </div>
+              <div class="field"><label>ประเภทหน่วยงาน</label>
+                <select name="AgencyType" class="agency-type"><option>ภาครัฐ</option><option>ท้องถิ่น</option><option>เอกชน</option><option>NGO</option><option>อื่นๆ</option></select>
+              </div>
+              <div class="field" style="grid-column:1 / -1;"><label>ชื่อหน่วยงานเฉพาะ (ถ้ามี — เว้นว่างหมายถึงระดับกรม)</label>
+                <input type="text" name="AgencyName" placeholder="เช่น โรงพยาบาลเชียงใหม่ / สำนักงานพัฒนาสังคมฯ จังหวัดเชียงใหม่">
+              </div>
+            </div>
+            <div class="flex gap-12">
+              <button type="submit" class="btn btn-primary">บันทึก</button>
+              <button type="button" class="btn btn-ghost" onclick="document.getElementById('agencyFormWrap').style.display='none'">ยกเลิก</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ---------- TAB: จัดการผู้ดูแลระบบ (เฉพาะ superadmin) ---------- -->
+      <div id="tabAdmins" class="tab-panel">
+        <div class="flex-between mt-8">
+          <p class="text-soft text-sm mb-0">เพิ่มผู้ดูแลระบบ กำหนดสิทธิ์การเข้าถึงรายข้อ ระงับบัญชี และรีเซ็ตรหัสผ่าน — การเปลี่ยนสิทธิ์/ระงับบัญชีมีผลทันทีในคำขอถัดไปของผู้ใช้นั้น</p>
+          <button class="btn btn-primary btn-sm" id="addAdminBtn">+ เพิ่มผู้ดูแลระบบ</button>
+        </div>
+        <div class="card mt-16" id="thaidSettingCard">
+          <div class="flex-between" style="flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3 style="margin:0 0 4px;">การเข้าสู่ระบบด้วย ThaiD</h3>
+              <p class="text-sm text-soft" style="margin:0;" id="thaidSettingText">กำลังตรวจสอบสถานะ...</p>
+            </div>
+            <button class="btn btn-outline btn-sm" id="thaidToggleBtn" disabled>-</button>
+          </div>
+          <p class="text-sm text-soft mt-8 mb-0">เมื่อเปิด ปุ่ม ThaiD จะแสดงในหน้าผู้ปฏิบัติงานและหน้าผู้ดูแลระบบ เมื่อปิด ปุ่มจะถูกซ่อนและระบบหลังบ้านปฏิเสธการเข้าสู่ระบบด้วย ThaiD ด้วย (เปิดได้เมื่อ configureThaiD() ตั้งค่าแล้วเท่านั้น)</p>
+        </div>
+
+        <div class="table-scroll mt-16">
+          <table class="data-table">
+            <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อที่แสดง</th><th>บทบาท</th><th>สถานะ</th><th>สิทธิ์</th><th>MFA</th><th>เข้าสู่ระบบล่าสุด</th><th></th></tr></thead>
+            <tbody id="adminsTableBody"><tr><td colspan="8" class="text-soft">กำลังโหลด...</td></tr></tbody>
+          </table>
+        </div>
+
+        <div id="adminFormWrap" style="display:none;" class="card mt-16 side-panel">
+          <h3 id="adminFormTitle" style="margin-top:0;">เพิ่มผู้ดูแลระบบ</h3>
+          <div id="adminFormAlert"></div>
+          <form id="adminForm">
+            <div class="form-grid">
+              <div class="field"><label>ชื่อผู้ใช้ (Username) *</label><input type="text" name="username" maxlength="30" placeholder="ตัวอักษรอังกฤษ/ตัวเลข 3-30 ตัว" required></div>
+              <div class="field"><label>ชื่อที่แสดง *</label><input type="text" name="displayName" required></div>
+              <div class="field"><label>บทบาท</label>
+                <select name="role" id="adm_roleSelect">
+                  <option value="admin">admin — ใช้ได้ตามสิทธิ์ที่กำหนด</option>
+                  <option value="superadmin">superadmin — ทุกสิทธิ์ และจัดการผู้ดูแลระบบอื่นได้</option>
+                </select>
+              </div>
+              <div class="field" id="adm_statusField" style="display:none;"><label>สถานะบัญชี</label>
+                <select name="status"><option value="active">ใช้งาน</option><option value="disabled">ระงับ (เข้าสู่ระบบไม่ได้)</option></select>
+              </div>
+              <div class="field"><label>อีเมล (ถ้ามี)</label><input type="email" name="email"></div>
+              <div class="field"><label>เลขบัตรประชาชน 13 หลัก (สำหรับเข้าสู่ระบบด้วย ThaiD — เว้นว่างได้)</label><input type="text" name="nationalId" maxlength="13" inputmode="numeric"></div>
+              <div class="field" id="adm_tempPwField"><label>รหัสผ่านชั่วคราว (เว้นว่าง = ให้ระบบสุ่มให้)</label><input type="text" name="tempPassword" autocomplete="off"></div>
+            </div>
+
+            <div id="adm_permBox">
+              <h4>สิทธิ์การเข้าถึง</h4>
+              <div class="flex gap-8" style="flex-wrap:wrap; margin-bottom:8px;">
+                <button type="button" class="btn btn-ghost btn-sm" data-preset="staff">ชุดเจ้าหน้าที่ทั่วไป</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-preset="viewer">ดูรายงานเท่านั้น</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-preset="all">เลือกทั้งหมด</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-preset="none">ล้างทั้งหมด</button>
+              </div>
+              <div id="adm_permList"></div>
+              <p class="text-sm text-soft mt-8">สิทธิ์แก้ไข/นำเข้าจะเลือก "ดูข้อมูลผู้ปฏิบัติงาน" ให้อัตโนมัติ · ข้อมูลวินัย/จริยธรรมเป็นข้อมูลอ่อนไหว ควรมอบให้เฉพาะผู้ที่จำเป็น</p>
+            </div>
+            <p class="text-sm text-soft" id="adm_superNote" style="display:none;">superadmin ได้รับทุกสิทธิ์โดยอัตโนมัติ ไม่ต้องกำหนดรายข้อ</p>
+            <p class="text-sm text-soft" id="adm_selfNote" style="display:none;">คุณกำลังแก้ไขบัญชีของตนเอง — ไม่สามารถเปลี่ยนบทบาท สถานะ หรือสิทธิ์ของตนเองได้ (ป้องกันการล็อกตัวเองออกจากระบบ)</p>
+
+            <div class="flex gap-12 mt-16">
+              <button type="submit" class="btn btn-primary" id="adminFormSubmit">บันทึก</button>
+              <button type="button" class="btn btn-ghost" id="adminFormCancel">ยกเลิก</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ---------- TAB: บัญชีของฉัน (ทุกบทบาทเห็น) ---------- -->
+      <div id="tabAccount" class="tab-panel">
+        <div class="card mt-8">
+          <h3 style="margin-top:0;">ข้อมูลบัญชีและสิทธิ์ของฉัน</h3>
+          <p class="text-sm" id="accountInfoText"></p>
+          <div id="accountPermList" class="text-sm"></div>
+        </div>
+
+        <div class="card mt-16">
+          <h3 style="margin-top:0;">เปลี่ยนรหัสผ่านของฉัน</h3>
+          <div id="changePwAlert"></div>
+          <div class="form-grid">
+            <div class="field"><label>รหัสผ่านปัจจุบัน</label><input type="password" id="cpCurrent" autocomplete="current-password"></div>
+            <div class="field"><label>รหัสผ่านใหม่ (อย่างน้อย 10 ตัวอักษร มีทั้งตัวอักษรและตัวเลข)</label><input type="password" id="cpNew" autocomplete="new-password"></div>
+            <div class="field"><label>ยืนยันรหัสผ่านใหม่</label><input type="password" id="cpConfirm" autocomplete="new-password"></div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="cpSubmitBtn">เปลี่ยนรหัสผ่าน</button>
+        </div>
+
+        <div class="card mt-16">
+          <div class="flex-between">
+            <h3 style="margin-top:0;">ความปลอดภัยบัญชีของฉัน — การยืนยันตัวตนหลายปัจจัย (MFA ผ่านอีเมล)</h3>
+            <button class="btn btn-outline btn-sm" id="mfaSetupBtn">ตั้งค่า MFA</button>
+          </div>
+          <p class="text-sm text-soft" id="mfaStatusText">กำลังตรวจสอบสถานะ...</p>
+          <div id="mfaSetupPanel" style="display:none;">
+            <div class="grid grid-2">
+              <div>
+                <p class="text-sm">กรอกอีเมลที่ต้องการใช้รับรหัส OTP ทุกครั้งที่เข้าสู่ระบบด้วยรหัสผ่าน:</p>
+                <div class="field"><label>อีเมล</label><input type="email" id="mfaEmailInput" placeholder="name@example.com"></div>
+                <button class="btn btn-outline btn-sm" id="mfaSendOtpBtn">ส่งรหัส OTP ไปยังอีเมลนี้</button>
+                <p class="text-sm text-soft mt-8" id="mfaSetupAlert"></p>
+              </div>
+              <div>
+                <div class="field"><label>กรอกรหัส OTP ที่ได้รับทางอีเมลเพื่อยืนยัน</label><input type="text" id="mfaConfirmOtp" maxlength="6" placeholder="รหัส 6 หลัก"></div>
+                <button class="btn btn-primary btn-sm" id="mfaConfirmBtn">ยืนยันและเปิดใช้งาน MFA</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------- TAB: Audit ---------- -->
+      <div id="tabAudit" class="tab-panel">
+        <div class="page-head"><div><h2>บันทึกการใช้งาน (Audit Log)</h2><p>บันทึกการเข้าใช้งานและการแก้ไขข้อมูล 200 รายการล่าสุด</p></div>
+          <div class="page-actions"><input type="search" id="auditSearch" placeholder="ค้นหาผู้ใช้ / การกระทำ / เป้าหมาย" style="width:260px;"></div></div>
+        <div class="chip-filter" id="auditChips">
+          <button type="button" class="on" data-f="">ทั้งหมด</button>
+          <button type="button" data-f="login|otp">เข้าสู่ระบบ</button>
+          <button type="button" data-f="person|register|updateprofile">ข้อมูลผู้ปฏิบัติงาน</button>
+          <button type="button" data-f="discipline">วินัย/จริยธรรม</button>
+          <button type="button" data-f="agency|course">หน่วยงาน/หลักสูตร</button>
+          <button type="button" data-f="admin(create|update|reset|change|set)|thaid">บัญชี/ตั้งค่า</button>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th>เวลา</th><th>ผู้ใช้งาน</th><th>การกระทำ</th><th>เป้าหมาย</th><th>รายละเอียด</th></tr></thead>
+            <tbody id="auditTableBody"><tr><td colspan="5" class="text-soft">กำลังโหลด...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      </div>
+    </div>
+</div>
+</main>
+
+<!-- บังคับเปลี่ยนรหัสผ่านชั่วคราวก่อนใช้งาน -->
+<div class="modal-overlay" id="forcePwModal" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="forcePwTitle">
+    <div class="modal-header"><h3 id="forcePwTitle">🔑 ตั้งรหัสผ่านใหม่ก่อนใช้งาน</h3></div>
+    <div class="modal-body">
+      <p>บัญชีของคุณใช้รหัสผ่านชั่วคราว กรุณาตั้งรหัสผ่านใหม่ของตนเอง (อย่างน้อย 10 ตัวอักษร มีทั้งตัวอักษรและตัวเลข) จึงจะเริ่มใช้งานได้</p>
+      <div id="forcePwAlert"></div>
+      <div class="field"><label>รหัสผ่านชั่วคราวปัจจุบัน</label><input type="password" id="fpCurrent" autocomplete="current-password"></div>
+      <div class="field"><label>รหัสผ่านใหม่</label><input type="password" id="fpNew" autocomplete="new-password"></div>
+      <div class="field"><label>ยืนยันรหัสผ่านใหม่</label><input type="password" id="fpConfirm" autocomplete="new-password"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" id="fpLogoutBtn" type="button">ออกจากระบบ</button> <button class="btn btn-primary" id="fpSubmitBtn" type="button">บันทึกรหัสผ่านใหม่</button></div>
+  </div>
+</div>
+
+<!-- แสดงรหัสผ่านชั่วคราวครั้งเดียว -->
+<div class="modal-overlay" id="tempPwModal" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="tempPwTitle">
+    <div class="modal-header"><h3 id="tempPwTitle">รหัสผ่านชั่วคราว</h3></div>
+    <div class="modal-body">
+      <p>บัญชี <strong id="tempPwUser"></strong></p>
+      <p style="font-size:1.3rem; font-family:monospace; background:var(--line); padding:10px 14px; border-radius:8px; user-select:all;" id="tempPwValue"></p>
+      <p class="text-sm"><strong>แสดงครั้งเดียวเท่านั้น</strong> — ระบบไม่เก็บรหัสนี้ไว้ในรูปที่อ่านได้ และไม่ส่งทางอีเมล โปรดคัดลอกแล้วส่งให้ผู้ใช้ผ่านช่องทางที่ปลอดภัย ผู้ใช้จะถูกบังคับให้ตั้งรหัสผ่านใหม่เมื่อเข้าสู่ระบบครั้งแรก</p>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" id="tempPwCopyBtn" type="button">คัดลอก</button> <button class="btn btn-primary" id="tempPwCloseBtn" type="button">ปิด</button></div>
+  </div>
+</div>
+
+<script src="thai-address-data.js"></script>
+<script src="agency-data.js"></script>
+<script src="universities-data.js"></script>
+<script src="api.js"></script>
+<script src="charts.js"></script>
+<script src="thailand-map.js"></script>
+<script src="admin.js"></script>
+<script src="admin-ui.js"></script>
+<script src="enhance.js"></script>
+</body>
+</html>

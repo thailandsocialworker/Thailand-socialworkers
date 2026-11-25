@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สำหรับผู้ปฏิบัติงาน — ระบบฐานข้อมูลผู้ปฏิบัติงานสังคมสงเคราะห์ประเทศไทย</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="enhance.css">
+<meta name="theme-color" content="#16325C">
+<link rel="icon" href="logo.png">
+</head>
+<body>
+<div class="flag-band"></div>
+<header class="site-header">
+  <div class="header-inner">
+    <img class="logo" src="logo.png" alt="ตราสภาวิชาชีพสังคมสงเคราะห์">
+    <div class="header-titles">
+      <div class="th"><span class="t-long">ระบบฐานข้อมูลผู้ปฏิบัติงานสังคมสงเคราะห์ประเทศไทย</span><span class="t-short" aria-hidden="true">ฐานข้อมูลผู้ปฏิบัติงานสังคมสงเคราะห์</span></div>
+      <div class="sub">สภาวิชาชีพสังคมสงเคราะห์ · Social Work Professions Council</div>
+    </div>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mainNav" aria-label="เปิดเมนู"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <nav class="main-nav" id="mainNav">
+      <a href="index.html">หน้าหลัก</a>
+      <a href="register.html" class="active">สำหรับผู้ปฏิบัติงาน</a>
+      <a href="admin.html">ผู้ดูแลระบบ</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+
+    <!-- ============ GATE: choose login or register ============ -->
+    <div id="gateView">
+      <div class="entry-grid">
+        <div class="entry-intro">
+          <h2>ลงทะเบียนและจัดการข้อมูลผู้ปฏิบัติงานของท่าน</h2>
+          <p>ตรวจสอบสถานะใบอนุญาต ปรับปรุงข้อมูลติดต่อและประวัติการทำงานด้วยตนเอง ตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล (PDPA)</p>
+          <ul class="entry-points">
+            <li>ท่านควบคุมข้อมูลของท่านเองได้ แก้ไขได้ทุกเมื่อหลังเข้าสู่ระบบ</li>
+            <li>หากสภาฯ มีข้อมูลของท่านอยู่แล้ว ใช้เลขสมาชิกหรือเลขใบอนุญาตเพื่อยืนยันตัวตน</li>
+            <li>ใช้ข้อมูลเพื่อกำกับดูแลมาตรฐานวิชาชีพเท่านั้น</li>
+          </ul>
+          <div data-manual-slot style="display:none; margin-top:20px;"></div>
+        </div>
+        <div class="entry-card">
+          <div class="pad" id="thaidCard" style="display:none;">
+            <h3>เข้าสู่ระบบด้วย ThaiD</h3>
+            <p class="text-sm text-soft">ยืนยันตัวตนด้วยแอปพลิเคชัน ThaiD ของกรมการปกครอง ไม่ต้องจำรหัสผ่าน</p>
+            <button class="btn btn-thaid" id="thaidLoginBtn">เข้าสู่ระบบด้วย ThaiD</button>
+            <div id="thaidLoginAlert" class="mt-8"></div>
+          </div>
+          <div class="pad">
+            <div class="seg-tabs">
+              <button type="button" class="on" id="gateTabLogin" onclick="showView('loginView')">เข้าสู่ระบบ</button>
+              <button type="button" id="gateTabRegister" onclick="showView('registerView')">ลงทะเบียนใหม่</button>
+            </div>
+            <p class="text-soft text-sm" style="margin:0 0 12px;">เลือก “เข้าสู่ระบบ” หากเคยลงทะเบียนไว้แล้ว หรือ “ลงทะเบียนใหม่” หากยังไม่เคยมีบัญชี<span id="thaidRegisterHint" style="display:none;"> (หรือใช้ปุ่ม ThaiD ด้านบนเพื่อลงทะเบียนอัตโนมัติ)</span></p>
+            <div class="flex gap-8">
+              <button class="btn btn-navy" style="flex:1;" onclick="showView('loginView')">เข้าสู่ระบบ</button>
+              <button class="btn btn-primary" style="flex:1;" onclick="showView('registerView')">ลงทะเบียนใหม่</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ LOGIN ============ -->
+    <div id="loginView" style="display:none;">
+      <div class="entry-grid" style="grid-template-columns:minmax(0,440px); justify-content:center;">
+        <div class="entry-card"><div class="pad">
+          <h3 style="font-size:1.3rem;">เข้าสู่ระบบ</h3>
+          <div id="loginAlert"></div>
+          <div class="field">
+            <label>เลขบัตรประชาชน</label>
+            <input type="text" id="loginNationalId" maxlength="13" placeholder="เลขบัตรประชาชน 13 หลัก">
+          </div>
+          <div class="field">
+            <label>รหัสผ่าน</label>
+            <input type="password" id="loginPassword">
+          </div>
+          <button class="btn btn-navy btn-block" id="loginBtn">เข้าสู่ระบบ</button>
+          <p class="text-sm text-center mt-16"><a href="#" onclick="showView('gateView'); return false;">← กลับ</a></p>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- ============ REGISTER ============ -->
+    <div id="registerView" style="display:none;">
+      <h2 class="section-title">ลงทะเบียนผู้ปฏิบัติงาน</h2>
+      <p class="section-sub">กรอกข้อมูลให้ครบถ้วน ท่านสามารถแก้ไขข้อมูลบางส่วนได้เองภายหลังจากเข้าสู่ระบบ</p>
+      <div id="registerAlert"></div>
+
+      <div class="pdpa-consent-card">
+        <div class="flex gap-12" style="align-items:flex-start;">
+          <span class="pdpa-icon"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+          <div>
+            <h3 style="margin:0 0 4px; color:var(--navy-deep);">ความเป็นส่วนตัวของข้อมูล (PDPA)</h3>
+            <p class="text-sm text-soft" style="margin:0;">
+              สภาวิชาชีพสังคมสงเคราะห์เก็บรวบรวมและใช้ข้อมูลของท่านเพื่อจัดทำฐานข้อมูลผู้ประกอบวิชาชีพและกำกับดูแลมาตรฐานวิชาชีพ
+              <button type="button" class="pdpa-link-btn" onclick="openPdpaModal()">อ่านประกาศฉบับเต็ม</button>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="wiz-layout mt-16"><ol class="wiz-steps card" id="wizSteps"></ol><div>
+      <div class="wiz-progress" id="wizProgress"></div>
+      <form id="registerForm" class="wiz-card">
+        <label class="text-sm flex gap-8" style="align-items:flex-start; background:#f7f5f0; padding:12px; border-radius:6px; border:1px solid var(--gold);">
+          <input type="checkbox" id="registerPdpaConsent" required style="margin-top:3px;">
+          <span>ข้าพเจ้าได้อ่านและยินยอมให้สภาวิชาชีพสังคมสงเคราะห์เก็บรวบรวม ใช้ และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้าตาม<button type="button" class="pdpa-link-btn" onclick="openPdpaModal()">ประกาศความเป็นส่วนตัว</button> *</span>
+        </label>
+
+        <h3 class="mt-24">1. ข้อมูลบุคคล</h3>
+        <div class="form-grid">
+          <div class="field"><label>คำนำหน้า *</label>
+            <select name="Prefix" id="prefixSelect" required>
+              <option value="นาย">นาย</option><option value="นาง">นาง</option><option value="นางสาว">นางสาว</option><option value="อื่นๆ">อื่นๆ</option>
+            </select>
+            <input type="text" id="prefixOther" placeholder="โปรดระบุคำนำหน้า" style="display:none; margin-top:8px;">
+          </div>
+          <div class="field"><label>เลขบัตรประชาชน * (13 หลัก)</label><input type="text" name="NationalID" id="regNationalId" maxlength="13" required></div>
+          <div class="field"><label>เลขที่สมาชิก หรือ เลขที่ใบอนุญาต (ใช้ยืนยันตัวตน)</label><input type="text" id="regClaimCode" autocomplete="off" placeholder="กรอกเฉพาะหากท่านเคยมีข้อมูลกับสภาฯ แล้ว">
+            <span class="text-sm text-soft">ถ้าสภาฯ มีข้อมูลของท่านอยู่แล้ว ต้องกรอกเลขนี้เพื่อยืนยันตัวตนก่อนดึงข้อมูลหรือรับสิทธิ์บัญชี</span></div>
+          <div class="field"><label>ชื่อ *</label><input type="text" name="FirstName" required></div>
+          <div class="field"><label>นามสกุล *</label><input type="text" name="LastName" required></div>
+          <div class="field"><label>เบอร์โทรศัพท์ *</label><input type="tel" name="Phone" required></div>
+          <div class="field"><label>อีเมล</label><input type="email" name="Email"></div>
+          <div class="field"><label>สถานะการปฏิบัติงาน *</label>
+            <select name="PracticeStatus" id="practiceStatusSelect" required>
+              <option value="กำลังปฏิบัติงาน">กำลังปฏิบัติงาน</option>
+              <option value="หยุดปฏิบัติงานชั่วคราว">หยุดปฏิบัติงานชั่วคราว</option>
+              <option value="เกษียณอายุ">เกษียณอายุ</option>
+              <option value="ไม่ได้ปฏิบัติงานในสายวิชาชีพ">ไม่ได้ปฏิบัติงานในสายวิชาชีพ</option>
+              <option value="อื่นๆ">อื่นๆ</option>
+            </select>
+            <input type="text" id="practiceStatusOther" placeholder="โปรดระบุสถานะการปฏิบัติงาน" style="display:none; margin-top:8px;">
+          </div>
+        </div>
+
+        <h3 class="flex-between" style="align-items:center;">
+          <span>2. ที่อยู่</span>
+          <button type="button" class="btn btn-outline btn-sm pull-council-btn" data-section="address">ดึงข้อมูลจากสภาฯ</button>
+        </h3>
+        <p class="text-sm text-soft" style="margin-top:-8px;">กรอกเลขบัตรประชาชนในข้อ 1 ก่อน แล้วกดปุ่มด้านบนเพื่อดึงที่อยู่ที่เคยลงทะเบียนไว้กับสภาฯ (ถ้ามี)</p>
+
+        <h4>ที่อยู่ตามทะเบียนบ้าน</h4>
+        <div class="form-grid">
+          <div class="field"><label>บ้านเลขที่</label><input type="text" name="House_No"></div>
+          <div class="field"><label>หมู่บ้าน</label><input type="text" name="House_Village"></div>
+          <div class="field"><label>อาคาร/ชั้น</label><input type="text" name="House_Building"></div>
+          <div class="field"><label>ซอย</label><input type="text" name="House_Soi"></div>
+          <div class="field"><label>ถนน</label><input type="text" name="House_Road"></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>จังหวัด *</label><select name="House_Province" class="addr-province" data-group="House" required><option value="">เลือกจังหวัด</option></select></div>
+          <div class="field"><label>อำเภอ/เขต *</label><select name="House_District" class="addr-district" data-group="House" required><option value="">เลือกจังหวัดก่อน</option></select></div>
+          <div class="field"><label>ตำบล/แขวง *</label><select name="House_Subdistrict" class="addr-subdistrict" data-group="House" required><option value="">เลือกอำเภอก่อน</option></select></div>
+          <div class="field"><label>รหัสไปรษณีย์</label><input type="text" name="House_Zipcode" class="addr-zipcode" data-group="House" readonly></div>
+        </div>
+
+        <h4>
+          ที่อยู่ปัจจุบัน
+          <label class="text-sm text-soft" style="font-weight:400; margin-left:12px;">
+            <input type="checkbox" id="sameAsHouse"> ใช้ที่อยู่เดียวกับทะเบียนบ้าน
+          </label>
+        </h4>
+        <div class="form-grid">
+          <div class="field"><label>บ้านเลขที่</label><input type="text" name="Current_No"></div>
+          <div class="field"><label>หมู่บ้าน</label><input type="text" name="Current_Village"></div>
+          <div class="field"><label>อาคาร/ชั้น</label><input type="text" name="Current_Building"></div>
+          <div class="field"><label>ซอย</label><input type="text" name="Current_Soi"></div>
+          <div class="field"><label>ถนน</label><input type="text" name="Current_Road"></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>จังหวัด *</label><select name="Current_Province" class="addr-province" data-group="Current" required><option value="">เลือกจังหวัด</option></select></div>
+          <div class="field"><label>อำเภอ/เขต *</label><select name="Current_District" class="addr-district" data-group="Current" required><option value="">เลือกจังหวัดก่อน</option></select></div>
+          <div class="field"><label>ตำบล/แขวง *</label><select name="Current_Subdistrict" class="addr-subdistrict" data-group="Current" required><option value="">เลือกอำเภอก่อน</option></select></div>
+          <div class="field"><label>รหัสไปรษณีย์</label><input type="text" name="Current_Zipcode" class="addr-zipcode" data-group="Current" readonly></div>
+        </div>
+
+        <h3 class="flex-between" style="align-items:center;">
+          <span>3. วุฒิการศึกษา</span>
+          <button type="button" class="btn btn-outline btn-sm pull-council-btn" data-section="education">ดึงข้อมูลจากสภาฯ</button>
+        </h3>
+        <p class="text-sm text-soft" style="margin-top:-8px;">เพิ่มได้มากกว่า 1 วุฒิ (เช่น ปริญญาตรีและปริญญาโท)</p>
+        <datalist id="universityListReg"></datalist>
+        <div id="educationRows"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="addEducationRow">+ เพิ่มวุฒิการศึกษา</button>
+
+        <h3 class="flex-between" style="align-items:center;">
+          <span>4. การทำงาน/หน่วยงาน/ตำแหน่ง</span>
+          <button type="button" class="btn btn-outline btn-sm pull-council-btn" data-section="work">ดึงข้อมูลจากสภาฯ</button>
+        </h3>
+        <div class="form-grid">
+          <div class="field"><label>ประเภทตำแหน่งงาน *</label>
+            <select name="PositionType" id="positionTypeSelect" required>
+              <option value="นักสังคมสงเคราะห์">นักสังคมสงเคราะห์</option>
+              <option value="ผู้ช่วยนักสังคมสงเคราะห์">ผู้ช่วยนักสังคมสงเคราะห์</option>
+              <option value="นักพัฒนาสังคม">นักพัฒนาสังคม</option>
+              <option value="นักพัฒนาชุมชน">นักพัฒนาชุมชน</option>
+              <option value="อื่นๆ">อื่นๆ</option>
+            </select>
+            <input type="text" id="positionTypeOther" placeholder="โปรดระบุประเภทตำแหน่งงาน" style="display:none; margin-top:8px;">
+          </div>
+          <div class="field"><label>ระดับตำแหน่ง</label>
+            <select name="PositionLevel" id="positionLevelSelect">
+              <option value="">ไม่ระบุ</option>
+              <option value="ปฏิบัติการ">ปฏิบัติการ</option>
+              <option value="ชำนาญการ">ชำนาญการ</option>
+              <option value="ชำนาญการพิเศษ">ชำนาญการพิเศษ</option>
+              <option value="เชี่ยวชาญ">เชี่ยวชาญ</option>
+              <option value="ผู้ทรงคุณวุฒิ">ผู้ทรงคุณวุฒิ</option>
+            </select>
+          </div>
+          <div class="field"><label>สังกัด</label>
+            <select name="Sangkad" class="agency-sangkad" required><option value="">เลือกสังกัด</option></select>
+          </div>
+          <div class="field"><label>กรม *</label>
+            <select name="Department" class="agency-department" required><option value="">เลือกสังกัดก่อน</option></select>
+            <input type="text" id="departmentOther" class="department-other" placeholder="โปรดระบุชื่อกรม" style="display:none; margin-top:8px;">
+          </div>
+          <div class="field"><label>ประเภทหน่วยงาน</label>
+            <select name="AgencyType" class="agency-type"><option value="ภาครัฐ">ภาครัฐ</option><option value="ท้องถิ่น">ท้องถิ่น</option><option value="เอกชน">เอกชน</option><option value="NGO">NGO</option><option value="อื่นๆ">อื่นๆ</option></select>
+          </div>
+          <div class="field" style="grid-column:1 / -1;"><label>ชื่อหน่วยงานที่ปฏิบัติงาน *</label>
+            <input type="text" name="AgencyName" required placeholder="เช่น สำนักงานพัฒนาสังคมและความมั่นคงของมนุษย์จังหวัดเชียงใหม่ / โรงพยาบาลเชียงใหม่">
+          </div>
+        </div>
+
+        <h4>
+          ที่ทำงาน
+          <label class="text-sm text-soft" style="font-weight:400; margin-left:12px;">
+            <input type="checkbox" id="sameAsCurrentWork"> ใช้ที่อยู่เดียวกับที่อยู่ปัจจุบัน
+          </label>
+        </h4>
+        <div class="form-grid">
+          <div class="field"><label>บ้านเลขที่</label><input type="text" name="Work_No"></div>
+          <div class="field"><label>หมู่บ้าน</label><input type="text" name="Work_Village"></div>
+          <div class="field"><label>อาคาร/ชั้น</label><input type="text" name="Work_Building"></div>
+          <div class="field"><label>ซอย</label><input type="text" name="Work_Soi"></div>
+          <div class="field"><label>ถนน</label><input type="text" name="Work_Road"></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>จังหวัด</label><select name="Work_Province" class="addr-province" data-group="Work"><option value="">เลือกจังหวัด</option></select></div>
+          <div class="field"><label>อำเภอ/เขต</label><select name="Work_District" class="addr-district" data-group="Work"><option value="">เลือกจังหวัดก่อน</option></select></div>
+          <div class="field"><label>ตำบล/แขวง</label><select name="Work_Subdistrict" class="addr-subdistrict" data-group="Work"><option value="">เลือกอำเภอก่อน</option></select></div>
+          <div class="field"><label>รหัสไปรษณีย์</label><input type="text" name="Work_Zipcode" class="addr-zipcode" data-group="Work" readonly></div>
+        </div>
+
+        <h4 class="flex-between" style="align-items:center;">
+          <span>ประวัติการทำงาน (หน่วยงาน/ตำแหน่ง ตามช่วงเวลา)</span>
+          <button type="button" class="btn btn-ghost btn-sm" id="addWorkHistoryRow">+ เพิ่มประวัติการทำงาน</button>
+        </h4>
+        <div id="workHistoryRows"></div>
+
+        <h3 class="flex-between" style="align-items:center;">
+          <span>5. สมาชิกภาพสภาวิชาชีพฯ</span>
+          <button type="button" class="btn btn-outline btn-sm pull-council-btn" data-section="membership">ดึงข้อมูลจากสภาฯ</button>
+        </h3>
+        <p class="text-sm text-soft" style="margin-top:-8px;">ข้อมูลส่วนนี้ออกโดยสภาฯ — หากท่านเป็นสมาชิกอยู่แล้ว ให้กดปุ่มด้านบนเพื่อดึงข้อมูล หากยังไม่เป็นสมาชิกสามารถเว้นว่างไว้ได้</p>
+        <div class="form-grid">
+          <div class="field"><label>เลขที่สมาชิก</label><input type="text" name="MembershipNumber"></div>
+          <div class="field"><label>ประเภทสมาชิก</label><input type="text" name="MembershipType" placeholder="เช่น สามัญ, สมทบ"></div>
+          <div class="field"><label>วันที่ออกบัตร</label><input type="date" name="MembershipIssueDate"></div>
+          <div class="field"><label>วันที่หมดอายุ</label><input type="date" name="MembershipExpireDate"></div>
+          <div class="field"><label>สถานะสมาชิก</label>
+            <select name="MembershipStatus"><option value="none">ยังไม่เป็นสมาชิก</option><option value="active">ปกติ</option><option value="ended">สิ้นสุด</option></select>
+          </div>
+        </div>
+
+        <h3 class="flex-between" style="align-items:center;">
+          <span>6. ใบอนุญาตประกอบวิชาชีพ</span>
+          <button type="button" class="btn btn-outline btn-sm pull-council-btn" data-section="license">ดึงข้อมูลจากสภาฯ</button>
+        </h3>
+        <p class="text-sm text-soft" style="margin-top:-8px;">ข้อมูลส่วนนี้ออกโดยสภาฯ — หากท่านมีใบอนุญาตอยู่แล้ว ให้กดปุ่มด้านบนเพื่อดึงข้อมูล หากยังไม่มีสามารถเว้นว่างไว้ได้</p>
+        <div class="form-grid">
+          <div class="field"><label>เลขที่ใบอนุญาต</label><input type="text" name="LicenseNumber"></div>
+          <div class="field"><label>วันที่รับใบอนุญาต</label><input type="date" name="LicenseIssueDate"></div>
+          <div class="field"><label>วันที่ใบอนุญาตหมดอายุ</label><input type="date" name="LicenseExpireDate"></div>
+        </div>
+
+        <h3 class="flex-between" style="align-items:center;">
+          <span>7. ความเชี่ยวชาญ</span>
+          <button type="button" class="btn btn-outline btn-sm pull-council-btn" data-section="specialization">ดึงข้อมูลจากสภาฯ</button>
+        </h3>
+        <div class="form-grid">
+          <div class="field" style="grid-column:1 / -1;"><label>สาขา/ด้านความเชี่ยวชาญ (คั่นด้วยจุลภาค)</label><input type="text" name="Specializations" placeholder="เช่น เด็กและครอบครัว, ผู้สูงอายุ, ผู้พิการ, กระบวนการยุติธรรม, สุขภาพ"></div>
+        </div>
+
+        <h3>ตั้งรหัสผ่านสำหรับเข้าสู่ระบบ</h3>
+        <div class="form-grid">
+          <div class="field"><label>รหัสผ่าน * (อย่างน้อย 8 ตัวอักษร)</label><input type="password" id="regPassword" minlength="8" required></div>
+          <div class="field"><label>ยืนยันรหัสผ่าน *</label><input type="password" id="regPassword2" minlength="8" required></div>
+        </div>
+
+        <p class="text-sm text-soft">ข้อมูลของท่านจะถูกจัดเก็บและใช้งานตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล (PDPA) เพื่อวัตถุประสงค์ในการกำกับดูแลมาตรฐานวิชาชีพเท่านั้น</p>
+
+        <div class="flex gap-12">
+          <button type="submit" class="btn btn-primary" id="registerBtn">ลงทะเบียน</button>
+          <button type="button" class="btn btn-ghost" onclick="showView('gateView')">ยกเลิก</button>
+        </div>
+      </form>
+    </div></div>
+    </div>
+
+    <!-- ============ PROFILE (after login) ============ -->
+    <div id="profileView" style="display:none;">
+      <div class="profile-layout">
+        <aside class="profile-aside">
+          <div class="profile-hero">
+            <div class="who"><div class="avatar" id="profAvatar">ผ</div><div><div class="nm" id="profName">-</div><div class="pid" id="profPid"></div></div></div>
+            <div class="row"><span>สถานะสมาชิกภาพ</span><b id="profMembership" style="color:#fff;">-</b></div>
+            <div class="row"><span>สถานะใบอนุญาต</span><b id="profLicense" style="color:#fff;">-</b></div>
+            <div class="lic-box">
+              <div class="top"><span>ใบอนุญาตหมดอายุ</span><b id="profLicenseExp">-</b></div>
+              <div class="meter"><i id="profMeter" style="width:0%"></i></div>
+              <div class="lic-note" id="profLicNote"></div>
+            </div>
+          </div>
+          <div class="profile-note"><b>ข้อมูลของท่าน</b>แก้ไขข้อมูลติดต่อ ที่อยู่ และประวัติการทำงานได้เอง ข้อมูลสมาชิกภาพและใบอนุญาตแก้ไขโดยเจ้าหน้าที่สภาฯ เท่านั้น</div>
+          <button class="btn btn-ghost btn-block" onclick="logout()">ออกจากระบบ</button>
+        </aside>
+        <div class="profile-main">
+          <div class="flex-between">
+            <div><h2>ข้อมูลส่วนตัวของฉัน</h2><p class="section-sub" id="profileSubtitle" style="margin:0;"></p></div>
+            <button class="btn btn-primary" id="profEditAllBtn" type="button">แก้ไขข้อมูล</button>
+          </div>
+          <div id="profSummary"></div>
+      <form id="profileForm" class="edit-panel" style="display:none;">
+        <div class="edit-head"><h3>แก้ไขข้อมูล</h3><button type="button" class="btn btn-ghost btn-sm" id="profEditCloseBtn">ปิด</button></div>
+        <div id="profileAlert"></div>
+
+        <div id="profPdpaBox" class="pdpa-consent-card" style="margin-bottom:16px;">
+          <div class="flex gap-12" style="align-items:flex-start; margin-bottom:12px;">
+            <span class="pdpa-icon"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+            <div>
+              <h4 style="margin:0 0 4px; color:var(--navy-deep);">ความเป็นส่วนตัวของข้อมูล (PDPA)</h4>
+              <p class="text-sm text-soft" style="margin:0;">
+                สภาวิชาชีพสังคมสงเคราะห์เก็บรวบรวมและใช้ข้อมูลของท่านเพื่อจัดทำฐานข้อมูลผู้ประกอบวิชาชีพและกำกับดูแลมาตรฐานวิชาชีพ
+                <button type="button" class="pdpa-link-btn" onclick="openPdpaModal()">อ่านประกาศฉบับเต็ม</button>
+              </p>
+            </div>
+          </div>
+          <label class="text-sm flex gap-8" style="align-items:flex-start;">
+            <input type="checkbox" id="profilePdpaConsent" style="margin-top:3px;">
+            <span id="profilePdpaConsentLabel">ข้าพเจ้าได้อ่านและยินยอมให้สภาวิชาชีพสังคมสงเคราะห์เก็บรวบรวม ใช้ และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้าตามประกาศความเป็นส่วนตัวข้างต้น *</span>
+          </label>
+        </div>
+
+        <h4>ข้อมูลติดต่อ</h4>
+        <div class="form-grid">
+          <div class="field"><label>เบอร์โทรศัพท์</label><input type="tel" name="Phone"></div>
+          <div class="field"><label>อีเมล</label><input type="email" name="Email"></div>
+          <div class="field"><label>สถานะการปฏิบัติงาน</label>
+            <select name="PracticeStatus" id="profPracticeStatusSelect">
+              <option value="กำลังปฏิบัติงาน">กำลังปฏิบัติงาน</option>
+              <option value="หยุดปฏิบัติงานชั่วคราว">หยุดปฏิบัติงานชั่วคราว</option>
+              <option value="เกษียณอายุ">เกษียณอายุ</option>
+              <option value="ไม่ได้ปฏิบัติงาน">ไม่ได้ปฏิบัติงาน</option>
+              <option value="อื่นๆ">อื่นๆ</option>
+            </select>
+            <input type="text" id="profPracticeStatusOther" placeholder="โปรดระบุ" style="display:none; margin-top:8px;">
+          </div>
+        </div>
+
+        <h4>ที่อยู่ตามทะเบียนบ้าน</h4>
+        <div class="form-grid">
+          <div class="field"><label>บ้านเลขที่</label><input type="text" name="House_No"></div>
+          <div class="field"><label>หมู่บ้าน</label><input type="text" name="House_Village"></div>
+          <div class="field"><label>อาคาร/ชั้น</label><input type="text" name="House_Building"></div>
+          <div class="field"><label>ซอย</label><input type="text" name="House_Soi"></div>
+          <div class="field"><label>ถนน</label><input type="text" name="House_Road"></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>จังหวัด</label><select name="House_Province" class="addr-province" data-group="House"><option value="">เลือกจังหวัด</option></select></div>
+          <div class="field"><label>อำเภอ/เขต</label><select name="House_District" class="addr-district" data-group="House"><option value="">เลือกจังหวัดก่อน</option></select></div>
+          <div class="field"><label>ตำบล/แขวง</label><select name="House_Subdistrict" class="addr-subdistrict" data-group="House"><option value="">เลือกอำเภอก่อน</option></select></div>
+          <div class="field"><label>รหัสไปรษณีย์</label><input type="text" name="House_Zipcode" class="addr-zipcode" data-group="House" readonly></div>
+        </div>
+
+        <h4>
+          ที่อยู่ปัจจุบัน
+          <label class="text-sm text-soft" style="font-weight:400; margin-left:12px;">
+            <input type="checkbox" id="profSameAsHouse"> ใช้ที่อยู่เดียวกับทะเบียนบ้าน
+          </label>
+        </h4>
+        <div class="form-grid">
+          <div class="field"><label>บ้านเลขที่</label><input type="text" name="Current_No"></div>
+          <div class="field"><label>หมู่บ้าน</label><input type="text" name="Current_Village"></div>
+          <div class="field"><label>อาคาร/ชั้น</label><input type="text" name="Current_Building"></div>
+          <div class="field"><label>ซอย</label><input type="text" name="Current_Soi"></div>
+          <div class="field"><label>ถนน</label><input type="text" name="Current_Road"></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>จังหวัด</label><select name="Current_Province" class="addr-province" data-group="Current"><option value="">เลือกจังหวัด</option></select></div>
+          <div class="field"><label>อำเภอ/เขต</label><select name="Current_District" class="addr-district" data-group="Current"><option value="">เลือกจังหวัดก่อน</option></select></div>
+          <div class="field"><label>ตำบล/แขวง</label><select name="Current_Subdistrict" class="addr-subdistrict" data-group="Current"><option value="">เลือกอำเภอก่อน</option></select></div>
+          <div class="field"><label>รหัสไปรษณีย์</label><input type="text" name="Current_Zipcode" class="addr-zipcode" data-group="Current" readonly></div>
+        </div>
+
+        <h4>วุฒิการศึกษา</h4>
+        <p class="text-sm text-soft" style="margin-top:-8px;">เพิ่มได้มากกว่า 1 วุฒิ (เช่น ปริญญาตรีและปริญญาโท)</p>
+        <datalist id="universityListProf"></datalist>
+        <div id="profEducationRows"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="profAddEducationRow">+ เพิ่มวุฒิการศึกษา</button>
+
+        <h4 class="mt-24">การทำงาน/หน่วยงาน/ตำแหน่ง</h4>
+        <div class="form-grid">
+          <div class="field"><label>ประเภทตำแหน่งงาน</label>
+            <select name="PositionType" id="profPositionTypeSelect">
+              <option value="นักสังคมสงเคราะห์">นักสังคมสงเคราะห์</option>
+              <option value="ผู้ช่วยนักสังคมสงเคราะห์">ผู้ช่วยนักสังคมสงเคราะห์</option>
+              <option value="นักพัฒนาสังคม">นักพัฒนาสังคม</option>
+              <option value="นักพัฒนาชุมชน">นักพัฒนาชุมชน</option>
+              <option value="อื่นๆ">อื่นๆ</option>
+            </select>
+            <input type="text" id="profPositionTypeOther" placeholder="โปรดระบุประเภทตำแหน่งงาน" style="display:none; margin-top:8px;">
+          </div>
+          <div class="field"><label>ระดับตำแหน่ง</label>
+            <select name="PositionLevel">
+              <option value="">ไม่ระบุ</option>
+              <option value="ปฏิบัติการ">ปฏิบัติการ</option>
+              <option value="ชำนาญการ">ชำนาญการ</option>
+              <option value="ชำนาญการพิเศษ">ชำนาญการพิเศษ</option>
+              <option value="เชี่ยวชาญ">เชี่ยวชาญ</option>
+              <option value="ผู้ทรงคุณวุฒิ">ผู้ทรงคุณวุฒิ</option>
+            </select>
+          </div>
+          <div class="field"><label>สังกัด</label>
+            <select name="Sangkad" class="agency-sangkad"><option value="">เลือกสังกัด</option></select>
+          </div>
+          <div class="field"><label>กรม</label>
+            <select name="Department" class="agency-department"><option value="">เลือกสังกัดก่อน</option></select>
+            <input type="text" id="profDepartmentOther" class="department-other" placeholder="โปรดระบุชื่อกรม" style="display:none; margin-top:8px;">
+          </div>
+          <div class="field"><label>ประเภทหน่วยงาน</label>
+            <select name="AgencyType" class="agency-type"><option value="ภาครัฐ">ภาครัฐ</option><option value="ท้องถิ่น">ท้องถิ่น</option><option value="เอกชน">เอกชน</option><option value="NGO">NGO</option><option value="อื่นๆ">อื่นๆ</option></select>
+          </div>
+          <div class="field"><label>ชื่อหน่วยงานที่ปฏิบัติงาน</label>
+            <input type="text" name="AgencyName" placeholder="เช่น สำนักงานพัฒนาสังคมและความมั่นคงของมนุษย์จังหวัดเชียงใหม่ / โรงพยาบาลเชียงใหม่">
+          </div>
+        </div>
+
+        <h4>
+          ที่ทำงาน
+          <label class="text-sm text-soft" style="font-weight:400; margin-left:12px;">
+            <input type="checkbox" id="profSameAsCurrentWork"> ใช้ที่อยู่เดียวกับที่อยู่ปัจจุบัน
+          </label>
+        </h4>
+        <div class="form-grid">
+          <div class="field"><label>บ้านเลขที่</label><input type="text" name="Work_No"></div>
+          <div class="field"><label>หมู่บ้าน</label><input type="text" name="Work_Village"></div>
+          <div class="field"><label>อาคาร/ชั้น</label><input type="text" name="Work_Building"></div>
+          <div class="field"><label>ซอย</label><input type="text" name="Work_Soi"></div>
+          <div class="field"><label>ถนน</label><input type="text" name="Work_Road"></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>จังหวัด</label><select name="Work_Province" class="addr-province" data-group="Work"><option value="">เลือกจังหวัด</option></select></div>
+          <div class="field"><label>อำเภอ/เขต</label><select name="Work_District" class="addr-district" data-group="Work"><option value="">เลือกจังหวัดก่อน</option></select></div>
+          <div class="field"><label>ตำบล/แขวง</label><select name="Work_Subdistrict" class="addr-subdistrict" data-group="Work"><option value="">เลือกอำเภอก่อน</option></select></div>
+          <div class="field"><label>รหัสไปรษณีย์</label><input type="text" name="Work_Zipcode" class="addr-zipcode" data-group="Work" readonly></div>
+        </div>
+
+        <h4 class="flex-between" style="align-items:center;">
+          <span>ประวัติการทำงาน (หน่วยงาน/ตำแหน่ง ตามช่วงเวลา)</span>
+          <button type="button" class="btn btn-ghost btn-sm" id="profAddWorkHistoryRow">+ เพิ่มประวัติการทำงาน</button>
+        </h4>
+        <div id="profWorkHistoryRows"></div>
+
+        <h4>ความเชี่ยวชาญ</h4>
+        <div class="form-grid">
+          <div class="field" style="grid-column:1 / -1;"><label>สาขา/ด้านความเชี่ยวชาญ (คั่นด้วยจุลภาค)</label><input type="text" name="Specializations" placeholder="เช่น เด็กและครอบครัว, ผู้สูงอายุ, ผู้พิการ, กระบวนการยุติธรรม, สุขภาพ"></div>
+        </div>
+
+        <p class="text-sm text-soft">เลขที่สมาชิก/ใบอนุญาต และวันที่ออก/หมดอายุ เป็นข้อมูลที่สภาวิชาชีพฯ เป็นผู้ดูแล ดูสถานะล่าสุดได้จากการ์ดด้านบน หากต้องการแก้ไขกรุณาติดต่อเจ้าหน้าที่</p>
+        <button type="submit" class="btn btn-primary">บันทึกการแก้ไข</button>
+      </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="modal-overlay" id="pdpaModal" hidden onclick="if(event.target===this) closePdpaModal()">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="pdpaModalTitle">
+    <div class="modal-header">
+      <h3 id="pdpaModalTitle">ประกาศความเป็นส่วนตัว (PDPA)</h3>
+      <button type="button" class="modal-close-btn" onclick="closePdpaModal()" aria-label="ปิด">✕</button>
+    </div>
+    <div class="modal-body">
+      <h4>ผู้ควบคุมข้อมูลส่วนบุคคล</h4>
+      <p>สภาวิชาชีพสังคมสงเคราะห์</p>
+
+      <h4>ข้อมูลที่จัดเก็บ</h4>
+      <p>ข้อมูลระบุตัวตน (ชื่อ-นามสกุล เลขบัตรประชาชน) ที่อยู่ ข้อมูลติดต่อ วุฒิการศึกษา ประวัติการทำงาน ข้อมูลสมาชิกภาพและใบอนุญาตประกอบวิชาชีพ และความเชี่ยวชาญ</p>
+
+      <h4>วัตถุประสงค์</h4>
+      <p>เพื่อจัดทำและปรับปรุงฐานข้อมูลผู้ประกอบวิชาชีพสังคมสงเคราะห์ให้เป็นปัจจุบัน สนับสนุนการกำกับดูแลมาตรฐานและจรรยาบรรณวิชาชีพ การติดต่อสื่อสารแจ้งข้อมูลข่าวสารที่เกี่ยวข้องกับสมาชิกภาพและใบอนุญาต ตลอดจนการจัดทำสถิติและรายงานภาพรวมของผู้ประกอบวิชาชีพในระดับประเทศ ทั้งนี้ เป็นไปตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562</p>
+
+      <h4>การเปิดเผยข้อมูล</h4>
+      <p>ข้อมูลบางส่วน (ชื่อ-นามสกุล ตำแหน่ง หน่วยงาน สถานะใบอนุญาต) อาจแสดงต่อสาธารณะผ่านระบบตรวจสอบใบอนุญาตออนไลน์ของสภาฯ เพื่อประโยชน์ในการคุ้มครองประชาชนผู้รับบริการ</p>
+
+      <h4>สิทธิของท่าน</h4>
+      <p>ท่านมีสิทธิขอเข้าถึง แก้ไข ลบ หรือถอนความยินยอมข้อมูลของท่านได้ตลอดเวลา โดยติดต่อ thaisocialworkcouncil@gmail.com</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-navy btn-sm" onclick="closePdpaModal()">ปิดหน้าต่างนี้</button>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="container">
+    <div>© สภาวิชาชีพสังคมสงเคราะห์ · ระบบฐานข้อมูลผู้ปฏิบัติงานสังคมสงเคราะห์ประเทศไทย</div>
+    <div>ข้อเสนอแนะ: thaisocialworkcouncil@gmail.com</div>
+
+  </div>
+</footer>
+
+<script src="thai-address-data.js"></script>
+<script src="agency-data.js"></script>
+<script src="universities-data.js"></script>
+<script src="api.js"></script>
+<script src="manual-link.js"></script>
+<script src="register.js"></script>
+<script src="wizard.js"></script>
+<script src="profile-ui.js"></script>
+<script src="enhance.js"></script>
+</body>
+</html>

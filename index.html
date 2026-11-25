@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบฐานข้อมูลผู้ปฏิบัติงานสังคมสงเคราะห์ประเทศไทย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="enhance.css">
+<meta name="theme-color" content="#16325C">
+<link rel="icon" href="logo.png">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+</head>
+<body>
+<div class="flag-band"></div>
+<header class="site-header">
+  <div class="header-inner">
+    <img class="logo" src="logo.png" alt="ตราสภาวิชาชีพสังคมสงเคราะห์">
+    <div class="header-titles">
+      <div class="th"><span class="t-long">ระบบฐานข้อมูลผู้ปฏิบัติงานสังคมสงเคราะห์ประเทศไทย</span><span class="t-short" aria-hidden="true">ฐานข้อมูลผู้ปฏิบัติงานสังคมสงเคราะห์</span></div>
+      <div class="sub">สภาวิชาชีพสังคมสงเคราะห์ · Social Work Professions Council</div>
+    </div>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mainNav" aria-label="เปิดเมนู"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <nav class="main-nav" id="mainNav">
+      <a href="index.html" class="active">หน้าหลัก</a>
+      <a href="register.html">สำหรับผู้ปฏิบัติงาน</a>
+      <a href="admin.html">ผู้ดูแลระบบ</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow">ระบบสารสนเทศกลาง · Prototype</div>
+      <h1>ตรวจสอบสถานะใบอนุญาตและข้อมูลผู้ปฏิบัติงานด้านสวัสดิการสังคมทั่วประเทศ</h1>
+      <p class="lead">ค้นหาด้วยชื่อ-นามสกุล เลขที่ใบอนุญาต หรือเลขที่สมาชิก เพื่อตรวจสอบสถานะใบอนุญาตประกอบวิชาชีพ (แสดงเฉพาะข้อมูลที่เปิดเผยได้ตามกฎหมายคุ้มครองข้อมูลส่วนบุคคล)</p>
+      <div class="hero-actions">
+        <a class="btn btn-hero" href="register.html">สำหรับผู้ปฏิบัติงาน</a>
+        <a class="btn btn-hero-outline" href="#dashboardWrap">ดูภาพรวมทั่วประเทศ</a>
+      </div>
+    </div>
+    <div class="hero-card">
+      <h3>ค้นหาผู้ปฏิบัติงาน</h3>
+      <p>ตรวจสอบสถานะใบอนุญาตประกอบวิชาชีพ</p>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="ชื่อ-นามสกุล / เลขที่ใบอนุญาต / เลขที่สมาชิก">
+        <button class="btn btn-primary" id="searchBtn">ค้นหา</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main>
+  <div class="container">
+
+    <div id="searchResultsWrap" style="display:none;">
+      <h2 class="section-title">ผลการค้นหา</h2>
+      <p class="section-sub" id="searchResultCount"></p>
+      <div id="searchResults"></div>
+    </div>
+
+    <div id="dashboardWrap">
+      <div class="flex-between">
+        <div>
+          <h2 class="section-title">ภาพรวมทั่วประเทศ</h2>
+          <p class="section-sub">สรุปข้อมูลสำหรับประชาชนทั่วไป — ข้อมูลเชิงลึก แดชบอร์ดฉบับเต็ม และรายงานมาตรฐาน สำหรับเจ้าหน้าที่ ดูได้ในระบบผู้ดูแล</p>
+        </div>
+      </div>
+
+      <div id="kpiGrid" class="grid grid-3">
+        <div class="card kpi"><div class="num">-</div><div class="label">ผู้ปฏิบัติงานทั้งหมด</div></div>
+        <div class="card kpi accent-green"><div class="num">-</div><div class="label">อัตราผู้มีใบอนุญาตที่ยังไม่หมดอายุ</div></div>
+        <div class="card kpi accent-gold"><div class="num">-</div><div class="label">ใบอนุญาตใกล้หมดอายุ (90 วัน)</div></div>
+      </div>
+
+      <div class="grid grid-map mt-24">
+        <div class="card">
+          <h3 style="margin-top:0;">แผนที่ความหนาแน่นผู้ปฏิบัติงานรายจังหวัด</h3>
+          <p class="text-sm text-soft" style="margin-top:-8px;">คลิกที่จังหวัดเพื่อดูจำนวนผู้ปฏิบัติงาน</p>
+          <div id="publicMap" style="min-height:480px;"></div>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0;">5 จังหวัดที่มีผู้ปฏิบัติงานมากที่สุด</h3>
+          <div id="topProvincesList"><p class="text-sm text-soft">กำลังโหลด...</p></div>
+          <div id="provinceDetailPanel" class="mt-16"></div>
+        </div>
+      </div>
+
+      <div class="card mt-16">
+        <h3 style="margin-top:0;">จำนวนผู้ปฏิบัติงานตามประเภทตำแหน่งงาน</h3>
+        <div id="positionTypeList"><p class="text-sm text-soft">กำลังโหลด...</p></div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div>© สภาวิชาชีพสังคมสงเคราะห์ · ระบบฐานข้อมูลผู้ปฏิบัติงานสังคมสงเคราะห์ประเทศไทย</div>
+    <div>ข้อเสนอแนะ: thaisocialworkcouncil@gmail.com</div>
+  </div>
+</footer>
+
+<script src="api.js"></script>
+<script src="manual-link.js"></script>
+<script src="thailand-map.js"></script>
+<script src="app.js"></script>
+<script src="enhance.js"></script>
+</body>
+</html>

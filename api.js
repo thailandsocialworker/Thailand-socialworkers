@@ -1,0 +1,307 @@
+/**
+ * ตัวเชื่อมต่อ API ไปยัง Google Apps Script Web App
+ *
+ * *** สำคัญ: ต้องแก้ค่า API_URL ด้านล่างให้เป็น URL ของ Web App ที่ deploy จาก Code.gs ***
+ * ดูวิธี deploy ได้ใน README.md (โฟลเดอร์ apps-script)
+ */
+const API_URL = 'https://script.google.com/macros/s/AKfycbxByRzS9Bvj-E7tgGxLp1rWWsNLmCXBIGpqj7LVIwIwbYoAIzQN6_PcZMzXePmKIVdO/exec';
+
+const Api = (() => {
+  function withParams(action, params) {
+    const usp = new URLSearchParams(Object.assign({ action }, params || {}));
+    return `${API_URL}?${usp.toString()}`;
+  }
+
+  async function get(action, params) {
+    if (!API_URL || API_URL.indexOf('PASTE_YOUR') === 0) {
+      throw new Error('ยังไม่ได้ตั้งค่า API_URL ใน js/api.js — โปรดใส่ URL ของ Apps Script Web App');
+    }
+    const res = await fetch(withParams(action, params), { method: 'GET' });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return data;
+  }
+
+  // ส่งเป็น text/plain เพื่อเลี่ยง CORS preflight ของ Apps Script (เทคนิคมาตรฐานสำหรับ Apps Script Web App)
+  async function post(action, payload) {
+    if (!API_URL || API_URL.indexOf('PASTE_YOUR') === 0) {
+      throw new Error('ยังไม่ได้ตั้งค่า API_URL ใน js/api.js — โปรดใส่ URL ของ Apps Script Web App');
+    }
+    const body = JSON.stringify(Object.assign({ action }, payload || {}));
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return data;
+  }
+
+  return {
+    search: (q) => get('search', { q }),
+    stats: () => get('stats'),
+    // ภาพรวมฉบับเจ้าหน้าที่ (มีรายชื่อใบอนุญาตใกล้หมดอายุ) — ถ้า backend ยังไม่ได้ Deploy เวอร์ชันใหม่ หรือบัญชีไม่มีสิทธิ์ดูภาพรวม
+    // จะถอยไปใช้ stats สาธารณะ (ตัวเลขรวมเหมือนเดิม แต่ไม่มีรายชื่อ) เพื่อไม่ให้แดชบอร์ดพัง
+    adminStats: (token) => get('adminStats', { token }).catch(e => (e && (e.message === 'unknown_action' || e.message === 'forbidden_insufficient_role')) ? get('stats') : Promise.reject(e)),
+    provinces: () => get('provinces'),
+    courses: (q) => get('courses', { q }),
+    // workHistory (สาธารณะ) ถูกปิดที่ backend แล้วเพื่อคุ้มครองข้อมูลส่วนบุคคล — ประวัติการทำงานมากับ selfLogin / personMe / adminGetPerson
+
+    register: (data, password, workHistoryEntries, educationEntries, pdpaConsent, claimCode) => post('register', { data, password, workHistoryEntries, educationEntries, pdpaConsent, claimCode }),
+    selfLogin: (nationalId, password) => post('selfLogin', { nationalId, password }),
+    updateProfile: (nationalId, password, data, educationEntries, workHistoryEntries, pdpaConsent) => post('updateProfile', { nationalId, password, data, educationEntries, workHistoryEntries, pdpaConsent }),
+    prefillLookup: (nationalId, claimCode) => get('prefillLookup', claimCode ? { nationalId, claimCode } : { nationalId }),
+
+    // ThaiD (ระบบพิสูจน์และยืนยันตัวตนทางดิจิทัลภาครัฐ)
+    thaidLoginUrl: (role, returnPath) => get('thaidLoginUrl', { role, returnPath: returnPath || '' }),
+    personMe: (token) => get('personMe', { token }),
+    personUpdateProfileToken: (token, data, educationEntries, workHistoryEntries, pdpaConsent) => post('personUpdateProfileToken', { token, data, educationEntries, workHistoryEntries, pdpaConsent }),
+
+    adminLogin: (username, password) => post('adminLogin', { username, password }),
+    adminVerifyLoginOtp: (username, otp) => post('adminVerifyLoginOtp', { username, otp }),
+    adminSetupMfa: (token, email) => post('adminSetupMfa', { token, email }),
+    adminConfirmMfa: (token, otp) => post('adminConfirmMfa', { token, otp }),
+    publicConfig: () => get('publicConfig'),
+    adminSetCouncilPull: (token, enabled) => post('adminSetCouncilPull', { token, enabled }),
+    adminSetManual: (token, url, title) => post('adminSetManual', { token, url, title }),
+    adminUploadManual: (token, fileName, mimeType, base64, title) => post('adminUploadManual', { token, fileName, mimeType, base64, title }),
+    adminSetThaidEnabled: (token, enabled) => post('adminSetThaidEnabled', { token, enabled }),
+    adminChangePassword: (token, currentPassword, newPassword) => post('adminChangePassword', { token, currentPassword, newPassword }),
+    adminListAdmins: (token) => get('adminListAdmins', { token }),
+    adminCreateAdmin: (token, data) => post('adminCreateAdmin', { token, data }),
+    adminUpdateAdmin: (token, username, data) => post('adminUpdateAdmin', { token, username, data }),
+    adminResetAdminPassword: (token, username, tempPassword) => post('adminResetAdminPassword', { token, username, tempPassword }),
+    adminListPersons: (token) => get('adminList', { token }),
+    adminWhoami: (token) => get('adminWhoami', { token }),
+    adminGetPerson: (token, personId) => get('adminGetPerson', { token, personId }),
+    adminUpsertPerson: (token, data, workHistoryEntry) => post('adminUpsertPerson', { token, data, workHistoryEntry }),
+    adminBulkImportPersons: (token, records) => post('adminBulkImportPersons', { token, records }),
+    adminDeletePerson: (token, personId) => post('adminDeletePerson', { token, personId }),
+    adminListDiscipline: (token) => get('adminDiscipline', { token }),
+    adminUpsertDiscipline: (token, data) => post('adminUpsertDiscipline', { token, data }),
+    adminListAudit: (token) => get('adminAudit', { token }),
+    adminAgencies: () => get('adminAgencies'),
+    adminAllEducation: (token) => get('adminAllEducation', { token }),
+    adminLicenseHistory: (token, personId) => get('adminLicenseHistory', { token, personId }),
+    // เตรียมไว้สำหรับเชื่อมระบบสมาชิกของสภาฯ: ส่งเหตุการณ์ใบอนุญาตเป็นชุด (ดู LicenseHistory.gs)
+    adminSyncLicenseHistory: (token, records, applyToCurrent) => post('adminSyncLicenseHistory', { token, records, applyToCurrent }),
+    universities: () => get('universities'),
+    adminUpsertAgency: (token, data) => post('adminUpsertAgency', { token, data }),
+    adminUpsertCourse: (token, data) => post('adminUpsertCourse', { token, data }),
+    adminDeleteCourse: (token, courseId) => post('adminDeleteCourse', { token, courseId }),
+  };
+})();
+
+function toast(msg, type) {
+  let wrap = document.querySelector('.toast-wrap');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.className = 'toast-wrap';
+    document.body.appendChild(wrap);
+  }
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type === 'error' ? 'err' : 'ok');
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ตรวจเลขประจำตัวประชาชน 13 หลักด้วยหลักตรวจสอบ (หลักที่ 13) — สูตรเดียวกับฝั่ง Apps Script (isValidThaiNationalId)
+function isValidThaiId(id) {
+  const s = String(id || '').trim();
+  if (!/^\d{13}$/.test(s)) return false;
+  let sum = 0;
+  for (let i = 0; i < 12; i++) sum += Number(s[i]) * (13 - i);
+  return (11 - (sum % 11)) % 10 === Number(s[12]);
+}
+
+// กล่องยืนยันของระบบ (แทน window.confirm) — คืนค่า Promise<boolean>
+// opts: { title, okText, cancelText, danger }
+function confirmDialog(message, opts) {
+  opts = opts || {};
+  return new Promise(resolve => {
+    let overlay;
+    try {
+      const prev = document.activeElement;
+      overlay = document.createElement('div');
+      overlay.className = 'modal-overlay confirm-overlay';
+      overlay.innerHTML = `<div class="modal-box confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="cfmTitle" aria-describedby="cfmMsg">
+        <div class="modal-header"><h3 id="cfmTitle"></h3></div>
+        <div class="modal-body"><p id="cfmMsg" style="white-space:pre-line;margin:0;"></p></div>
+        <div class="modal-footer confirm-actions">
+          <button type="button" class="btn btn-ghost" data-v="0"></button>
+          <button type="button" class="btn ${opts.danger ? 'btn-danger' : 'btn-navy'}" data-v="1"></button>
+        </div></div>`;
+      overlay.querySelector('#cfmTitle').textContent = opts.title || 'ยืนยันการทำรายการ';
+      overlay.querySelector('#cfmMsg').textContent = message;
+      overlay.querySelector('[data-v="0"]').textContent = opts.cancelText || 'ยกเลิก';
+      overlay.querySelector('[data-v="1"]').textContent = opts.okText || 'ยืนยัน';
+      const done = v => {
+        document.removeEventListener('keydown', onKey, true);
+        overlay.remove();
+        if (prev && prev.focus) prev.focus();
+        resolve(v);
+      };
+      const onKey = e => {
+        if (e.key === 'Escape') { e.preventDefault(); done(false); }
+        if (e.key === 'Tab') {
+          const b = Array.from(overlay.querySelectorAll('button'));
+          const i = b.indexOf(document.activeElement);
+          e.preventDefault(); b[(i + (e.shiftKey ? b.length - 1 : 1)) % b.length].focus();
+        }
+      };
+      overlay.addEventListener('click', e => {
+        const b = e.target.closest('[data-v]');
+        if (b) done(b.dataset.v === '1');
+        else if (e.target === overlay) done(false);
+      });
+      document.addEventListener('keydown', onKey, true);
+      document.body.appendChild(overlay);
+      overlay.querySelector('[data-v="0"]').focus(); // โฟกัสที่ "ยกเลิก" ก่อน กันกด Enter ยืนยันโดยไม่ตั้งใจ
+    } catch (e) {
+      if (overlay) overlay.remove();
+      resolve(window.confirm(message));
+    }
+  });
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function fmtDate(d) {
+  if (!d) return '-';
+  try {
+    const date = new Date(d);
+    if (isNaN(date)) return String(d);
+    return date.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch (e) { return String(d); }
+}
+
+// ========================= ที่อยู่: จังหวัด/อำเภอ/ตำบล/รหัสไปรษณีย์ (ใช้ร่วมกันหลายหน้า) =========================
+// ต้องโหลด js/thai-address-data.js ก่อนไฟล์นี้ (77 จังหวัด / 928 อำเภอ / 7,436 ตำบล พร้อมรหัสไปรษณีย์)
+
+function initAddressDropdowns(root = document) {
+  const data = window.THAI_ADDRESS;
+  if (!data) return;
+
+  root.querySelectorAll('.addr-province').forEach(sel => {
+    if (sel.dataset.filled) return; // กันเติมซ้ำถ้าเรียกฟังก์ชันนี้มากกว่าหนึ่งครั้งกับ root เดิม
+    sel.dataset.filled = '1';
+    data.provinces.slice().sort((a, b) => a.name.localeCompare(b.name, 'th')).forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.name; opt.dataset.code = p.code; opt.textContent = p.name;
+      sel.appendChild(opt);
+    });
+  });
+
+  function districtsFor(provinceCode) { return data.districts.filter(d => d.provinceCode === provinceCode); }
+  function subdistrictsFor(districtCode) { return data.subdistricts.filter(s => s.districtCode === districtCode); }
+
+  root.querySelectorAll('.addr-province').forEach(provSel => {
+    if (provSel.dataset.wired) return;
+    provSel.dataset.wired = '1';
+    const group = provSel.dataset.group;
+    const distSel = root.querySelector(`.addr-district[data-group="${group}"]`);
+    const subSel = root.querySelector(`.addr-subdistrict[data-group="${group}"]`);
+    const zipInput = root.querySelector(`.addr-zipcode[data-group="${group}"]`);
+
+    provSel.addEventListener('change', () => {
+      const code = provSel.selectedOptions[0] ? parseInt(provSel.selectedOptions[0].dataset.code, 10) : null;
+      distSel.innerHTML = '<option value="">เลือกอำเภอ/เขต</option>';
+      subSel.innerHTML = '<option value="">เลือกอำเภอก่อน</option>';
+      zipInput.value = '';
+      if (!code) return;
+      districtsFor(code).sort((a, b) => a.name.localeCompare(b.name, 'th')).forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.name; opt.dataset.code = d.code; opt.textContent = d.name;
+        distSel.appendChild(opt);
+      });
+    });
+
+    distSel.addEventListener('change', () => {
+      const code = distSel.selectedOptions[0] ? parseInt(distSel.selectedOptions[0].dataset.code, 10) : null;
+      subSel.innerHTML = '<option value="">เลือกตำบล/แขวง</option>';
+      zipInput.value = '';
+      if (!code) return;
+      subdistrictsFor(code).sort((a, b) => a.name.localeCompare(b.name, 'th')).forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.name; opt.dataset.zip = s.zip; opt.textContent = s.name;
+        subSel.appendChild(opt);
+      });
+    });
+
+    subSel.addEventListener('change', () => {
+      const zip = subSel.selectedOptions[0] ? subSel.selectedOptions[0].dataset.zip : '';
+      zipInput.value = zip || '';
+    });
+  });
+}
+
+// เลือก option ของ dropdown ที่อยู่ตาม "ชื่อ" (ใช้ตอนเติมข้อมูลเดิมของบุคคลลงฟอร์มแก้ไข) แล้วยิง change event
+// ต่อเนื่องกันเพื่อให้ dropdown ลูก (อำเภอ/ตำบล) ถูกเติมและเลือกค่าตามลำดับ
+function setAddressGroupValues(form, group, values) {
+  const provSel = form[`${group}_Province`], distSel = form[`${group}_District`], subSel = form[`${group}_Subdistrict`], zipInput = form[`${group}_Zipcode`];
+  provSel.value = values.province || '';
+  provSel.dispatchEvent(new Event('change'));
+  setTimeout(() => {
+    distSel.value = values.district || '';
+    distSel.dispatchEvent(new Event('change'));
+    setTimeout(() => {
+      subSel.value = values.subdistrict || '';
+      subSel.dispatchEvent(new Event('change'));
+      if (values.zipcode) zipInput.value = values.zipcode;
+    }, 0);
+  }, 0);
+}
+
+// ผูก checkbox "ใช้ที่อยู่เดียวกับทะเบียนบ้าน" เข้ากับฟอร์มใดก็ได้ที่มีฟิลด์ House_*/Current_* ครบ
+function wireSameAsHouse(formId, checkboxId) {
+  const form = document.getElementById(formId);
+  const checkbox = document.getElementById(checkboxId);
+  if (!form || !checkbox) return;
+  const simpleFields = ['No', 'Village', 'Building', 'Soi', 'Road'];
+
+  function copy() {
+    simpleFields.forEach(f => { form[`Current_${f}`].value = form[`House_${f}`].value; });
+    setAddressGroupValues(form, 'Current', {
+      province: form.House_Province.value, district: form.House_District.value,
+      subdistrict: form.House_Subdistrict.value, zipcode: form.House_Zipcode.value
+    });
+  }
+
+  checkbox.addEventListener('change', (e) => {
+    const lockFields = [...simpleFields.map(f => `Current_${f}`), 'Current_Zipcode'];
+    if (e.target.checked) {
+      copy();
+      lockFields.forEach(f => form[f].setAttribute('readonly', 'readonly'));
+      ['Current_Province', 'Current_District', 'Current_Subdistrict'].forEach(f => form[f].style.pointerEvents = 'none');
+    } else {
+      lockFields.forEach(f => form[f].removeAttribute('readonly'));
+      ['Current_Province', 'Current_District', 'Current_Subdistrict'].forEach(f => form[f].style.pointerEvents = '');
+    }
+  });
+
+  ['House_Province', 'House_District', 'House_Subdistrict'].forEach(name => {
+    form[name].addEventListener('change', () => { if (checkbox.checked) setTimeout(copy, 0); });
+  });
+}
+
+// ========================= "อื่นๆ" -> ช่องกรอกข้อความเพิ่มเติม (ใช้ร่วมกันหลายหน้า) =========================
+
+function wireOtherToggle(selectId, otherId) {
+  const select = document.getElementById(selectId);
+  const other = document.getElementById(otherId);
+  if (!select || !other) return;
+  select.addEventListener('change', () => {
+    other.style.display = (select.value === 'อื่นๆ') ? '' : 'none';
+    if (select.value !== 'อื่นๆ') other.value = '';
+  });
+}
+
+function applyOtherOverride(data, selectId, otherId, fieldName) {
+  const otherVal = document.getElementById(otherId).value.trim();
+  if (data[fieldName] === 'อื่นๆ' && otherVal) data[fieldName] = otherVal;
+  return data;
+}

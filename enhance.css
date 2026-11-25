@@ -1,0 +1,216 @@
+/* ==========================================================================
+   enhance.css — ชั้นปรับปรุง UX/การเข้าถึง (Accessibility) แบบ "เพิ่มเติมเท่านั้น"
+   โหลดต่อจาก style.css · ไม่เปลี่ยน id/class เดิม ไม่แตะตรรกะใน JS เดิม
+   ถ้าต้องการย้อนกลับ ให้ลบ <link href="enhance.css"> ออกจากหน้า HTML ได้ทันที
+   ========================================================================== */
+
+:root {
+  /* ขอบช่องกรอกต้องตัดกับพื้นอย่างน้อย 3:1 (WCAG 1.4.11) — ของเดิม #CFD4DA ได้แค่ 1.5:1 */
+  --control-border: #858F9C;
+  --focus-ring: 0 0 0 3px rgba(19, 115, 158, .35);
+}
+
+/* ---------- 1) โฟกัสที่มองเห็นได้ทุกองค์ประกอบที่กดได้ (คีย์บอร์ด) ---------- */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+summary:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.admin-sidebar a:focus-visible,
+.admin-sidebar button:focus-visible,
+.hero a:focus-visible,
+.login-left a:focus-visible,
+.admin-topbar button:focus-visible { outline-color: #fff; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { box-shadow: var(--focus-ring); }
+
+/* ---------- 2) ขอบช่องกรอกข้อมูลชัดขึ้น ---------- */
+input[type=text], input[type=password], input[type=email], input[type=tel], input[type=date],
+input[type=number], input[type=search], select, textarea, .search-box input {
+  border-color: var(--control-border);
+}
+input[readonly] { border-color: var(--line); }
+.btn-hero-outline { border-color: #6E8DB8; }
+
+/* ---------- 3) ช่องกรอกบนมือถือ 16px ขึ้นไป (กัน iOS ซูมหน้าเมื่อแตะช่อง) ---------- */
+@media (max-width: 760px) {
+  input[type=text], input[type=password], input[type=email], input[type=tel], input[type=date],
+  input[type=number], input[type=search], select, textarea, .search-box input { font-size: 16px; }
+}
+
+/* ---------- 4) พื้นที่แตะอย่างน้อย 44px บนจอสัมผัส ---------- */
+@media (pointer: coarse) {
+  .btn, .btn-sm, nav.main-nav a, .chip-filter button, .seg-tabs button, .tab-btn,
+  .pane-tabs button, .sb-logout, .sum-card .edit-btn { min-height: 44px; }
+  .modal-close-btn, .panel-close { width: 44px; height: 44px; }
+  .admin-topbar button { min-width: 44px; min-height: 44px; }
+  input[type=checkbox], input[type=radio] { width: 20px; height: 20px; }
+}
+
+/* ---------- 5) ลิงก์ข้ามไปเนื้อหาหลัก (Skip link) ---------- */
+.skip-link {
+  position: absolute; left: 12px; top: -60px; z-index: 1000;
+  background: var(--navy); color: #fff; padding: 10px 16px; border-radius: var(--r-md);
+  font-weight: 600; text-decoration: none; transition: top .15s;
+}
+.skip-link:focus { top: 12px; color: #fff; }
+
+/* ข้อความสำหรับโปรแกรมอ่านหน้าจอเท่านั้น */
+.sr-only {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---------- 6) ช่องบังคับกรอก / ช่องที่ผิด ---------- */
+.field.is-invalid input, .field.is-invalid select, .field.is-invalid textarea,
+input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] {
+  border-color: var(--red-dark); box-shadow: 0 0 0 2px rgba(176, 24, 37, .15);
+}
+.field-error { color: var(--red-dark); font-size: 0.8rem; margin-top: 4px; display: flex; gap: 6px; align-items: flex-start; }
+.field-error svg { flex-shrink: 0; margin-top: 2px; }
+
+/* ---------- 7) ไอคอน SVG (แทนอีโมจิ) ---------- */
+.ui-icon { width: 1em; height: 1em; display: inline-block; vertical-align: -0.125em; flex-shrink: 0; }
+.pdpa-icon .ui-icon { width: 18px; height: 18px; }
+.empty-state .icon .ui-icon { width: 40px; height: 40px; color: var(--faint); }
+
+/* ---------- 8) โครงร่างระหว่างโหลด (Skeleton) แทน "-" ---------- */
+.kpi .num.is-loading {
+  color: transparent; width: 5ch; border-radius: 6px;
+  background: linear-gradient(90deg, var(--panel) 25%, var(--panel-2) 50%, var(--panel) 75%);
+  background-size: 200% 100%; animation: sk-shimmer 1.2s linear infinite;
+}
+@keyframes sk-shimmer { to { background-position: -200% 0; } }
+
+/* ปุ่มค้นหาขณะรอผล */
+.btn[aria-busy="true"] { pointer-events: none; opacity: .8; }
+
+/* ---------- 9) ตารางทางเลือกของแผนที่ (สำหรับคีย์บอร์ด/โปรแกรมอ่านหน้าจอ) ---------- */
+.map-table-alt { margin-top: 12px; }
+.map-table-alt summary { cursor: pointer; color: var(--blue); font-weight: 600; font-size: 0.88rem; padding: 6px 0; }
+.map-table-alt .table-scroll { max-height: 320px; margin-top: 8px; }
+.map-table-alt td:last-child, .map-table-alt th:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- 10) หน้า ThaiD callback — เดิมอ้าง .auth-shell/.auth-card แต่ไม่มีใน style.css ---------- */
+.auth-shell { display: grid; place-items: center; min-height: 50vh; padding: 24px 0; }
+.auth-card {
+  background: #fff; border: 1px solid var(--divider); border-radius: 16px; padding: 32px 28px;
+  box-shadow: var(--shadow-lg); width: 100%; max-width: 460px;
+}
+.auth-card .alert { text-align: left !important; }
+
+/* ---------- 11) Toast: ไม่บังปุ่มบนมือถือ + ปิดเองได้ ---------- */
+@media (max-width: 620px) {
+  .toast-wrap { left: 12px; right: 12px; bottom: 12px; }
+  .toast { min-width: 0; }
+}
+.toast { display: flex; gap: 10px; align-items: flex-start; }
+.toast .toast-close { margin-left: auto; background: none; border: 0; color: inherit; opacity: .8; cursor: pointer; font-size: 1rem; line-height: 1; padding: 2px 4px; }
+.toast .toast-close:hover { opacity: 1; }
+
+/* ---------- 12) ข้อความยาวในตาราง/ชื่อ ไม่ล้นจอ ---------- */
+.result-name, .result-meta { overflow-wrap: anywhere; }
+
+/* ---------- 13) เคารพการตั้งค่า "ลดการเคลื่อนไหว" ของระบบปฏิบัติการ ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ---------- 14) โหมดพิมพ์ (หน้าโปรไฟล์/รายงาน) ---------- */
+@media print {
+  .flag-band, header.site-header, .admin-sidebar, .admin-topbar, .toast-wrap, .skip-link,
+  .btn, .page-actions, footer.site-footer { display: none !important; }
+  body { background: #fff; }
+  .card, .sum-card, .table-scroll { box-shadow: none; border-color: #999; max-height: none; overflow: visible; }
+  .admin-shell { display: block; }
+}
+
+/* ==========================================================================
+   รอบที่ 2: เมนูมือถือ · แผนที่ · หน้าแรก · ผลค้นหา · ฟอร์ม · กล่องยืนยัน · ตารางหลังบ้าน
+   ========================================================================== */
+
+/* ---------- 15) ชื่อระบบแบบสั้น + เมนูแบบปุ่ม (hamburger) บนมือถือ ---------- */
+.header-titles .t-short { display: none; }
+@media (max-width: 760px) {
+  .header-inner { flex-wrap: wrap; padding: 10px 16px; gap: 10px; }
+  .header-inner img.logo { width: 38px; height: 38px; }
+  .header-titles .t-long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .header-titles .t-short { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-titles .sub { display: none; }
+  .nav-toggle { display: inline-grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; }
+  .nav-toggle .ui-icon { width: 22px; height: 22px; }
+  nav.main-nav {
+    order: 3; width: 100%; display: none; flex-direction: column; flex-wrap: nowrap; gap: 2px;
+    overflow: visible; padding: 6px 0 4px; border-top: 1px solid var(--divider);
+  }
+  nav.main-nav.is-open { display: flex; }
+  nav.main-nav a { padding: 12px 14px; min-height: 44px; white-space: normal; }
+}
+
+/* ---------- 16) แผนที่: คำอธิบายสี ---------- */
+.map-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin-top: 10px; font-size: 0.8rem; color: var(--muted); }
+.map-legend-bar { display: inline-block; width: 160px; max-width: 40vw; height: 10px; border-radius: 6px; border: 1px solid var(--divider); }
+.map-legend-none { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; }
+.map-legend-none i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--line); }
+
+/* ---------- 17) หน้าแรก: 5 จังหวัดสูงสุดแบบแถบสัดส่วน + แผงรายละเอียดจังหวัด ---------- */
+.rank-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.rank-row {
+  width: 100%; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  background: none; border: 0; border-radius: var(--r-md); padding: 8px 6px; text-align: left; cursor: pointer;
+  font-family: inherit; color: var(--ink); min-height: 44px;
+}
+.rank-row:hover { background: var(--panel-2); }
+.rank-no { width: 26px; height: 26px; border-radius: 99px; background: var(--blue-soft); color: var(--blue-dark); display: grid; place-items: center; font-weight: 700; font-size: 0.8rem; }
+.rank-main { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.rank-name { font-weight: 600; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-bar { height: 6px; border-radius: 4px; background: var(--panel); overflow: hidden; }
+.rank-bar i { display: block; height: 100%; background: var(--navy); border-radius: 4px; }
+.rank-num { font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rank-num small { font-weight: 400; color: var(--muted); }
+.province-detail { background: var(--blue-soft); border: 1px solid var(--blue-line); border-radius: var(--r-lg); padding: 16px 18px; }
+.province-detail-num { font-size: 1.8rem; font-weight: 700; color: var(--navy); line-height: 1.2; margin: 4px 0; font-variant-numeric: tabular-nums; }
+.province-detail-num span { font-size: 0.9rem; font-weight: 500; color: var(--muted); }
+
+/* ---------- 18) ผลค้นหา: จำนวนวันก่อนใบอนุญาตหมดอายุ ---------- */
+.lic-days { display: inline-block; margin-top: 6px; font-size: 0.82rem; font-weight: 600; color: var(--green); }
+.lic-days-warn { color: var(--amber-text); }
+.lic-days-bad { color: var(--red-dark); }
+.badge .ui-icon { width: 13px; height: 13px; }
+
+/* ---------- 19) ฟอร์ม: ปุ่มแสดง/ซ่อนรหัสผ่าน ---------- */
+.pw-wrap { position: relative; display: block; }
+.pw-wrap > input { padding-right: 52px; }
+.pw-toggle {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 40px; border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: var(--r-sm);
+  display: grid; place-items: center;
+}
+.pw-toggle:hover { color: var(--navy); background: var(--panel-2); }
+.pw-toggle .ui-icon { width: 20px; height: 20px; }
+.field-warn { color: var(--amber-text); font-size: 0.8rem; margin-top: 4px; }
+.draft-note { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* ---------- 20) กล่องยืนยัน (แทน confirm ของเบราว์เซอร์) ---------- */
+.confirm-overlay { z-index: 500; }
+.confirm-box { max-width: 460px; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- 21) หลังบ้าน: จำนวนรายการ / ปุ่มแสดงเพิ่ม ---------- */
+.people-filter-wrap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.more-row td { background: var(--panel-2); padding: 10px; }
+
+/* ---------- 22) เปรียบเทียบ KPI (MoM / YoY) ---------- */
+.delta-up { color: var(--green) !important; font-weight: 600; }
+.delta-down { color: var(--red-dark) !important; font-weight: 600; }
+.delta-flat { color: var(--muted) !important; }
+.kpi-compare td:nth-child(n+2), .kpi-compare th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lic-history td { vertical-align: top; }
+.lic-history .nowrap, .nowrap { white-space: nowrap; }
