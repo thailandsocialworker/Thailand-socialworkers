@@ -87,6 +87,7 @@ function applyPermissionsToUi() {
   });
   const setShow = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
   setShow('addPersonBtn', can('people_edit'));
+  setShow('idMigrateCard', adminRole === 'superadmin');
   setShow('importPeopleBtn', can('people_import'));
   setShow('importTemplateBtn', can('people_import'));
   setShow('addDisciplineBtn', can('discipline_edit'));
@@ -1035,6 +1036,7 @@ function openPersonForm(personId) {
     }
   }
   loadLicenseHistoryBox(personId);
+  loadAdminPhotoBox(personId);
   wrap.scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -1657,3 +1659,98 @@ async function loadLicenseHistoryBox(personId) {
       : `<div class="alert alert-error">โหลดประวัติใบอนุญาตไม่สำเร็จ: ${escapeHtml(e.message)}</div>`;
   }
 }
+
+
+// ================= รูปประจำตัวในฟอร์มผู้ปฏิบัติงาน (Photo.gs) =================
+// ผู้ดูแลดู/อัปโหลด/ลบรูปให้ได้ และซ่อนรูปจากหน้าสาธารณะได้ — แต่เปิดแสดงต่อสาธารณะแทนเจ้าของไม่ได้ (ต้องเป็นความยินยอมของเจ้าของ)
+async function loadAdminPhotoBox(personId) {
+  const box = document.getElementById('admPhotoBox');
+  if (!box || !window.MemberUI) return;
+  if (!personId) { box.innerHTML = ''; return; }
+  const p = peopleCache.find(x => x.PersonID === personId) || { PersonID: personId };
+  const edit = can('people_edit');
+  const draw = (photo, pub, msg) => {
+    box.innerHTML = `${MemberUI.avatarHtml(Object.assign({}, p, { Photo: photo }), 'adm-photo-img')}
+      <div class="adm-photo-body">
+        <div><b>รูปประจำตัว</b> <span class="text-sm text-soft">${photo ? (pub ? '· เจ้าของให้แสดงในผลการค้นหาสาธารณะ' : '· ไม่แสดงต่อสาธารณะ') : '· ยังไม่มีรูป'}</span></div>
+        ${edit ? `<div class="flex gap-12 mt-8" style="flex-wrap:wrap;">
+          <button type="button" class="btn btn-outline btn-sm" data-ph="upload">${photo ? 'เปลี่ยนรูป' : 'อัปโหลดรูป'}</button>
+          ${photo ? '<button type="button" class="btn btn-ghost btn-sm" data-ph="delete">ลบรูป</button>' : ''}
+          ${photo && pub ? '<button type="button" class="btn btn-ghost btn-sm" data-ph="hide">ซ่อนจากหน้าสาธารณะ</button>' : ''}
+        </div>` : ''}
+        ${msg ? `<div class="text-sm mt-8" style="color:var(--red-dark);">${escapeHtml(msg)}</div>` : ''}
+      </div>`;
+  };
+  box.innerHTML = '<p class="text-sm text-soft mb-0">กำลังโหลดรูป...</p>';
+  let state = { Photo: '', PhotoPublic: false };
+  try { state = await Api.adminPhoto(adminToken, personId); }
+  catch (e) { if (handleAuthFailure(e)) return; draw('', false, e.message === 'unknown_action' ? '' : MemberUI.photoErrText(e.message)); if (e.message === 'unknown_action') box.innerHTML = ''; return; }
+  draw(state.Photo, state.PhotoPublic);
+  box.onclick = async ev => {
+    const b = ev.target.closest('[data-ph]');
+    if (!b) return;
+    const op = b.dataset.ph;
+    try {
+      if (op === 'upload') {
+        const file = await MemberUI.pickFile();
+        if (!file) return;
+        b.disabled = true; b.textContent = 'กำลังบันทึก...';
+        const img = await MemberUI.preparePhoto(file);
+        state = await Api.adminPersonPhoto(adminToken, personId, 'upload', { base64: img.base64, mimeType: img.mimeType });
+        toast('บันทึกรูปแล้ว');
+      } else if (op === 'delete') {
+        if (!(await confirmDialog('ลบรูปประจำตัวของผู้ปฏิบัติงานคนนี้หรือไม่?', { title: 'ลบรูป', okText: 'ลบรูป' }))) return;
+        state = await Api.adminPersonPhoto(adminToken, personId, 'delete');
+        toast('ลบรูปแล้ว');
+      } else if (op === 'hide') {
+        const r = await Api.adminPersonPhoto(adminToken, personId, 'hide');
+        state = Object.assign({}, state, r);
+        toast('ซ่อนรูปจากหน้าสาธารณะแล้ว');
+      }
+      draw(state.Photo, state.PhotoPublic);
+      if (can('audit')) loadAudit();
+    } catch (e) {
+      if (handleAuthFailure(e)) return;
+      draw(state.Photo, state.PhotoPublic, MemberUI.photoErrText(e.message));
+    }
+  };
+}
+
+// ================= ปรับรหัสผู้ปฏิบัติงานให้ขึ้นต้นตามตำแหน่ง (superadmin, PersonId.gs) =================
+(function () {
+  const out = document.getElementById('idMigrateResult');
+  const runBtn = document.getElementById('idMigrateRunBtn');
+  const prevBtn = document.getElementById('idMigratePreviewBtn');
+  if (!out || !runBtn || !prevBtn) return;
+  prevBtn.addEventListener('click', async () => {
+    prevBtn.disabled = true; out.innerHTML = '<p class="text-sm text-soft mb-0">กำลังตรวจสอบ...</p>'; runBtn.style.display = 'none';
+    try {
+      const r = await Api.adminMigratePersonIds(adminToken, false);
+      if (!r.total) { out.innerHTML = '<div class="alert alert-success">รหัสทุกระเบียนตรงกับตำแหน่งแล้ว ไม่ต้องปรับ</div>'; return; }
+      out.innerHTML = `<p class="text-sm mb-8">จะเปลี่ยน <b>${r.total.toLocaleString('th-TH')}</b> ระเบียน${r.conflicts ? ` (ข้าม ${r.conflicts} ระเบียนที่รหัสใหม่ชนกับรหัสที่มีอยู่)` : ''}${r.total > r.sample.length ? ` — แสดง ${r.sample.length} รายการแรก` : ''}</p>
+        <div class="table-scroll" style="max-height:260px;"><table class="data-table"><thead><tr><th>รหัสเดิม</th><th>รหัสใหม่</th><th>ชื่อ-สกุล</th><th>ตำแหน่ง</th></tr></thead><tbody>
+        ${r.sample.map(c => `<tr><td class="mono">${escapeHtml(c.OldID)}</td><td class="mono"><b>${escapeHtml(c.NewID)}</b></td><td>${escapeHtml(c.Name)}</td><td>${escapeHtml(c.PositionType || 'ไม่ระบุ')}</td></tr>`).join('')}
+        </tbody></table></div>`;
+      runBtn.style.display = '';
+      runBtn.dataset.total = r.total;
+    } catch (e) {
+      if (handleAuthFailure(e)) return;
+      out.innerHTML = `<div class="alert alert-error">${e.message === 'unknown_action' ? 'ระบบหลังบ้านยังไม่ได้อัปเดต (ต้อง Deploy Apps Script เวอร์ชันใหม่ที่มี PersonId.gs)' : 'ตรวจสอบไม่สำเร็จ: ' + escapeHtml(adminErrText(e.message))}</div>`;
+    } finally { prevBtn.disabled = false; }
+  });
+  runBtn.addEventListener('click', async () => {
+    if (!(await confirmDialog(`ปรับรหัส ${Number(runBtn.dataset.total || 0).toLocaleString('th-TH')} ระเบียนให้ขึ้นต้นตามตำแหน่งหรือไม่? ควรสำรองไฟล์ Google Sheets ก่อน`, { title: 'ปรับรหัสผู้ปฏิบัติงาน', okText: 'ปรับรหัส' }))) return;
+    runBtn.disabled = true;
+    try {
+      const r = await Api.adminMigratePersonIds(adminToken, true);
+      out.innerHTML = `<div class="alert alert-success">ปรับรหัสแล้ว ${r.total.toLocaleString('th-TH')} ระเบียน (บันทึกรหัสเดิม→ใหม่ไว้ในชีต PersonIdChanges)</div>`;
+      runBtn.style.display = 'none';
+      toast('ปรับรหัสเรียบร้อย');
+      if (typeof loadPeople === 'function') loadPeople();
+      if (can('audit')) loadAudit();
+    } catch (e) {
+      if (handleAuthFailure(e)) return;
+      out.innerHTML = `<div class="alert alert-error">ปรับรหัสไม่สำเร็จ: ${escapeHtml(adminErrText(e.message))}</div>`;
+    } finally { runBtn.disabled = false; }
+  });
+})();

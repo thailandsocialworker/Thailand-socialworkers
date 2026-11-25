@@ -15,6 +15,7 @@
       const name = `${person.Prefix || ''}${person.FirstName || ''} ${person.LastName || ''}`.trim();
       document.getElementById('profName').textContent = name;
       document.getElementById('profAvatar').textContent = (person.FirstName || 'ผ').charAt(0);
+      renderMemberExtras(person);
       document.getElementById('profPid').textContent = person.PersonID || '';
       const m = document.getElementById('profMeter'), n = document.getElementById('profLicNote');
       m.className = ''; n.className = 'lic-note'; n.textContent = ''; m.style.width = '0%';
@@ -38,6 +39,72 @@
         card('ความเชี่ยวชาญ', [['สาขา', E(person.Specializations), 1]]);
     } catch (err) { console.error(err); }
   };
+
+  // ---- สถานะที่มีผลจริง + บัตรสมาชิก/ใบอนุญาต + รูปประจำตัว (member-ui.js)
+  let cur = null;
+  function renderAvatar() {
+    const av = document.getElementById('profAvatar');
+    if (!cur || !av) return;
+    av.classList.toggle('has-photo', !!cur.Photo);
+    av.innerHTML = cur.Photo ? `<img src="${cur.Photo}" alt="รูปประจำตัว">` : E((cur.FirstName || 'ผ').charAt(0));
+  }
+  function renderPhotoCard() {
+    const has = !!(cur && cur.Photo);
+    const pub = has && (cur.PhotoPublic === true || cur.PhotoPublic === 'TRUE' || cur.PhotoPublic === 'true');
+    document.getElementById('profPhotoUpload').textContent = has ? 'เปลี่ยนรูป' : 'อัปโหลดรูป';
+    document.getElementById('profPhotoDelete').hidden = !has;
+    const cb = document.getElementById('profPhotoPublic');
+    cb.checked = pub; cb.disabled = !has;
+    document.getElementById('profPhotoState').textContent = !has ? 'ยังไม่มีรูป' : pub ? 'แสดงต่อสาธารณะ' : 'เฉพาะท่านและเจ้าหน้าที่';
+    renderAvatar();
+  }
+  function renderMemberExtras(person) {
+    cur = person;
+    if (!window.MemberUI) return;
+    const ms = MemberUI.membershipState(person), ls = MemberUI.licenseState(person);
+    document.getElementById('profMembership').textContent = ms.label;
+    document.getElementById('profLicense').textContent = ls.key === 'none' ? 'ไม่มี' : ls.label;
+    document.getElementById('profCards').innerHTML = MemberUI.membershipPanel(person) + MemberUI.licensePanel(person);
+    renderPhotoCard();
+  }
+  const photoAlert = (msg, kind) => {
+    document.getElementById('profPhotoAlert').innerHTML = msg ? `<div class="alert alert-${kind || 'error'}" style="margin:8px 0 0;">${E(msg)}</div>` : '';
+  };
+  async function photoCall(btn, fn) {
+    photoAlert('');
+    const old = btn && btn.textContent;
+    if (btn) { btn.disabled = true; btn.textContent = 'กำลังบันทึก...'; }
+    try { await fn(); } catch (err) { photoAlert(MemberUI.photoErrText(err.message)); }
+    finally { if (btn) { btn.disabled = false; btn.textContent = old; } renderPhotoCard(); }
+  }
+  document.getElementById('profPhotoUpload').addEventListener('click', async e => {
+    const btn = e.currentTarget;
+    const file = await MemberUI.pickFile();
+    if (!file) return;
+    await photoCall(btn, async () => {
+      const img = await MemberUI.preparePhoto(file);
+      const r = await Api.selfPhoto(currentSession, 'upload', { base64: img.base64, mimeType: img.mimeType });
+      cur.Photo = r.Photo || img.dataUrl; cur.PhotoPublic = r.PhotoPublic;
+      toast('บันทึกรูปประจำตัวแล้ว');
+    });
+  });
+  document.getElementById('profPhotoDelete').addEventListener('click', async e => {
+    const btn = e.currentTarget;
+    if (!(await confirmDialog('ลบรูปประจำตัวออกจากระบบหรือไม่?', { title: 'ลบรูป', okText: 'ลบรูป' }))) return;
+    await photoCall(btn, async () => {
+      await Api.selfPhoto(currentSession, 'delete');
+      cur.Photo = ''; cur.PhotoPublic = false;
+      toast('ลบรูปแล้ว');
+    });
+  });
+  document.getElementById('profPhotoPublic').addEventListener('change', async e => {
+    const want = e.target.checked;
+    await photoCall(null, async () => {
+      const r = await Api.selfPhoto(currentSession, 'visibility', { public: want });
+      cur.PhotoPublic = r.PhotoPublic;
+      toast(want ? 'รูปจะแสดงในผลการค้นหาสาธารณะ' : 'ซ่อนรูปจากผลการค้นหาสาธารณะแล้ว');
+    });
+  });
 
   const form = document.getElementById('profileForm');
   const open = () => { form.style.display = ''; form.scrollIntoView({ behavior: 'smooth' }); };

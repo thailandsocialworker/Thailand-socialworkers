@@ -206,6 +206,21 @@
           <p class="text-sm text-soft mt-8 mb-0">ค่าเริ่มต้นคือปิด เมื่อปิด ปุ่ม “ดึงข้อมูลจากสภาฯ” ในหน้าลงทะเบียนจะถูกซ่อน และระบบหลังบ้านปฏิเสธคำขอดึงข้อมูลด้วย ให้กดเปิดเมื่อเชื่อมต่อข้อมูลสภาฯ ได้แล้ว</p>
         </div>
 
+        <div class="card mt-16" id="idMigrateCard" style="display:none;">
+          <h3 style="margin:0 0 4px;">รหัสผู้ปฏิบัติงานตามตำแหน่ง</h3>
+          <p class="text-sm text-soft" style="margin:0 0 10px;">ระเบียนใหม่ได้รหัสขึ้นต้นตามประเภทตำแหน่งอัตโนมัติ เลขรันต่อเนื่องทั้งระบบและไม่ซ้ำกัน</p>
+          <div class="id-prefix-list">
+            <span><b class="mono">SW</b> นักสังคมสงเคราะห์</span><span><b class="mono">SWA</b> ผู้ช่วยนักสังคมสงเคราะห์</span>
+            <span><b class="mono">SD</b> นักพัฒนาสังคม</span><span><b class="mono">CD</b> นักพัฒนาชุมชน</span><span><b class="mono">OT</b> อื่น ๆ / ยังไม่ระบุ</span>
+          </div>
+          <p class="text-sm text-soft mt-8">รหัสเดิม (เช่น P00001) และคนที่เปลี่ยนตำแหน่งภายหลังจะยังใช้รหัสเดิมจนกว่าจะกดปรับ การปรับจะเปลี่ยนเฉพาะอักษรนำหน้า เลขเดิมคงไว้ (P00001 → SW00001) และแก้ทุกชีตที่อ้างอิงให้ด้วย ควรสำรองไฟล์ Google Sheets ก่อน และแจ้งผู้ที่เคยได้รับรหัสเดิม</p>
+          <div class="flex gap-12" style="flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" id="idMigratePreviewBtn">ตรวจสอบรายการที่จะเปลี่ยน</button>
+            <button class="btn btn-primary btn-sm" id="idMigrateRunBtn" style="display:none;">ยืนยันปรับรหัส</button>
+          </div>
+          <div id="idMigrateResult" class="mt-8" aria-live="polite"></div>
+        </div>
+
         <div class="card mt-16" id="manualSettingCard">
           <h3 style="margin:0 0 4px;">คู่มือผู้ใช้งานทั่วไป</h3>
           <p class="text-sm text-soft" style="margin:0 0 12px;" id="manualSettingText">กำลังตรวจสอบสถานะ...</p>
@@ -229,6 +244,7 @@
         <div id="personFormWrap" style="display:none;" class="card mt-16 side-panel">
           <h3 id="personFormTitle" style="margin-top:0;">เพิ่มผู้ปฏิบัติงาน</h3>
           <div id="personFormAlert"></div>
+          <div id="admPhotoBox" class="adm-photo"></div>
           <form id="personForm">
             <input type="hidden" name="PersonID">
             <h4 style="margin-top:0;">ข้อมูลบุคคล</h4>
@@ -628,6 +644,7 @@
 <script src="agency-data.js"></script>
 <script src="universities-data.js"></script>
 <script src="api.js"></script>
+<script src="member-ui.js"></script>
 <script src="charts.js"></script>
 <script src="thailand-map.js"></script>
 <script src="admin.js"></script>

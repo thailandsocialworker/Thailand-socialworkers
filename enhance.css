@@ -214,3 +214,68 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 .kpi-compare td:nth-child(n+2), .kpi-compare th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .lic-history td { vertical-align: top; }
 .lic-history .nowrap, .nowrap { white-space: nowrap; }
+
+/* ===================== v4: footer ติดล่างจอ (หน้าเนื้อหาสั้น footer ไม่ลอยกลางจอ) ===================== */
+body.sticky-footer { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+body.sticky-footer > main { flex: 1 0 auto; width: 100%; }
+body.sticky-footer > footer.site-footer { margin-top: auto; flex-shrink: 0; }
+
+/* ===================== v4: การ์ดผู้ปฏิบัติงาน (ผลการค้นหา + หน้าโปรไฟล์) — member-ui.js ===================== */
+.mc-card { background: #fff; border: 1px solid var(--divider); border-radius: 16px; padding: 18px 20px 16px; box-shadow: var(--shadow); }
+.mc-card + .mc-card { margin-top: 14px; }
+.mc-head { display: flex; gap: 14px; align-items: center; }
+.mc-avatar { width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; overflow: hidden;
+  background: var(--blue-soft); color: var(--blue-dark); font-weight: 700; font-size: 1.5rem; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--blue-line); }
+.mc-avatar img, .adm-photo-img img, .profile-hero .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mc-who { min-width: 0; flex: 1; }
+.mc-name { margin: 0; font-size: 1.12rem; line-height: 1.35; color: var(--navy); }
+.mc-sub { color: var(--ink-2); font-size: 0.88rem; margin-top: 2px; }
+.mc-code { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+.mc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.mc-panel { background: var(--panel-2); border: 1px solid var(--divider); border-radius: 12px; padding: 12px 14px; min-width: 0; display: flex; flex-direction: column; }
+.mc-panel-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.mc-title { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--navy); font-size: 0.92rem; }
+.mc-title .ui-icon { width: 18px; height: 18px; color: var(--blue); }
+.mc-dl { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+.mc-dl dt { font-size: 0.74rem; color: var(--muted); }
+.mc-dl .wide { grid-column: 1 / -1; }
+.mc-dl dd { margin: 0; font-size: 0.92rem; color: var(--ink); font-weight: 500; word-break: break-word; }
+.mc-meter { height: 6px; background: #fff; border: 1px solid var(--divider); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+.mc-meter i { display: block; height: 100%; background: var(--green); border-radius: 99px; }
+.mc-meter.amber i { background: var(--amber); } .mc-meter.red i, .mc-meter.gray i { background: var(--faint); }
+.mc-days { display: block; margin-top: 6px; font-size: 0.82rem; font-weight: 600; }
+.mc-days.ok { color: var(--green); } .mc-days.warn { color: var(--amber-text); } .mc-days.bad { color: var(--red-dark); }
+.mc-empty { margin: 2px 0 0; color: var(--muted); font-size: 0.86rem; }
+.mc-hint { margin: 6px 0 0; font-size: 0.78rem; color: var(--amber-text); }
+.mc-specs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
+.mc-specs-h { font-size: 0.78rem; color: var(--muted); margin-right: 2px; }
+.mc-card .badge .ui-icon, .mc-panel .badge .ui-icon { width: 13px; height: 13px; }
+@media (max-width: 640px) {
+  .mc-card { padding: 14px; }
+  .mc-avatar { width: 52px; height: 52px; font-size: 1.25rem; }
+  .mc-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 380px) { .mc-dl { grid-template-columns: 1fr; } }
+
+/* หน้าโปรไฟล์: บัตรสมาชิก/ใบอนุญาต + รูปประจำตัว */
+.prof-cards { margin-top: 14px; }
+.prof-cards .mc-panel { background: #fff; box-shadow: var(--shadow); }
+.profile-hero .avatar { width: 64px; height: 64px; overflow: hidden; border: 2px solid rgba(255,255,255,.85); }
+.photo-card { background: #fff; border: 1px solid var(--divider); border-radius: var(--r-lg); padding: 14px 16px; }
+.photo-card-h { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin-bottom: 10px; }
+.photo-card-h b { color: var(--navy); font-size: 0.92rem; }
+.photo-card-h span { font-size: 0.78rem; color: var(--muted); }
+.photo-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.photo-public { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; font-size: 0.86rem; color: var(--ink); cursor: pointer; }
+.photo-public input { margin-top: 3px; width: 18px; height: 18px; flex-shrink: 0; }
+.photo-public small { display: block; color: var(--muted); font-size: 0.76rem; }
+.photo-public:has(input:disabled) { opacity: .55; cursor: not-allowed; }
+.photo-help { margin: 10px 0 0; font-size: 0.76rem; color: var(--muted); }
+
+/* หลังบ้าน: รูปในฟอร์ม + รายการอักษรนำหน้ารหัส */
+.adm-photo:empty { display: none; }
+.adm-photo { display: flex; gap: 14px; align-items: center; padding: 12px 14px; margin-bottom: 14px; background: var(--panel-2); border: 1px solid var(--divider); border-radius: 12px; }
+.adm-photo-img { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; flex-shrink: 0; background: var(--blue-soft); color: var(--blue-dark); font-weight: 700; font-size: 1.5rem; }
+.id-prefix-list { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.86rem; }
+.id-prefix-list b { color: var(--navy); margin-right: 4px; }
+@media print { .photo-card, .adm-photo { display: none !important; } }

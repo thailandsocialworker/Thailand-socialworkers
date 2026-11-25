@@ -50,21 +50,8 @@ function renderResults(results) {
   wrap.style.display = '';
   dash.style.display = 'none';
   count.textContent = `พบ ${results.length} รายการ`;
-  list.innerHTML = results.map(p => `
-    <div class="result-card">
-      <div>
-        <div class="result-name">${escapeHtml(p.Prefix || '')}${escapeHtml(p.FirstName)} ${escapeHtml(p.LastName)}</div>
-        <div class="result-meta">${escapeHtml(p.PositionType || '-')} · ${escapeHtml(p.AgencyName || '-')} · ${escapeHtml(p.Province || '-')}</div>
-        <div class="result-meta">เลขที่สมาชิก: ${escapeHtml(p.MembershipNumber || '-')} · เลขที่ใบอนุญาต: ${escapeHtml(p.LicenseNumber || '-')}${p.LicenseExpireDate ? ' (หมดอายุ ' + fmtDate(p.LicenseExpireDate) + ')' : ''}</div>
-        ${p.LicenseStatus === 'active' ? licenseDaysText(p) : ''}
-        ${p.Specializations ? `<div class="result-meta">ความเชี่ยวชาญ: ${escapeHtml(p.Specializations)}</div>` : ''}
-      </div>
-      <div class="result-badges">
-        ${statusBadge(p.MembershipStatus, 'membership')}
-        ${statusBadge(p.LicenseStatus, 'license')}
-      </div>
-    </div>
-  `).join('');
+  // การ์ดผลการค้นหา: สมาชิกภาพ/ใบอนุญาตแยกเป็น 2 ส่วน พร้อมเลขที่ วันออก วันหมดอายุ และรูป (ถ้าเจ้าของยินยอม) — member-ui.js
+  list.innerHTML = results.map(p => MemberUI.resultCard(p)).join('');
 }
 
 async function doSearch() {

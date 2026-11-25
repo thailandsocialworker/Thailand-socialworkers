@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#16325C">
 <link rel="icon" href="logo.png">
 </head>
-<body>
+<body class="sticky-footer">
 <div class="flag-band"></div>
 <header class="site-header">
   <div class="header-inner">
@@ -320,6 +320,16 @@
               <div class="lic-note" id="profLicNote"></div>
             </div>
           </div>
+          <div class="photo-card" id="profPhotoCard">
+            <div class="photo-card-h"><b>รูปประจำตัว</b><span id="profPhotoState">ยังไม่มีรูป</span></div>
+            <div class="photo-actions">
+              <button type="button" class="btn btn-outline btn-sm" id="profPhotoUpload">อัปโหลดรูป</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="profPhotoDelete" hidden>ลบรูป</button>
+            </div>
+            <label class="photo-public"><input type="checkbox" id="profPhotoPublic" disabled> <span>แสดงรูปในผลการค้นหาสาธารณะ<small>ไม่เลือก = เห็นเฉพาะท่านและเจ้าหน้าที่สภาฯ</small></span></label>
+            <p class="photo-help">ใช้รูปหน้าตรงที่เห็นใบหน้าชัดเจน (JPG, PNG หรือ WEBP) ระบบครอปเป็นสี่เหลี่ยมจัตุรัสและย่อขนาดให้อัตโนมัติ</p>
+            <div id="profPhotoAlert" role="status" aria-live="polite"></div>
+          </div>
           <div class="profile-note"><b>ข้อมูลของท่าน</b>แก้ไขข้อมูลติดต่อ ที่อยู่ และประวัติการทำงานได้เอง ข้อมูลสมาชิกภาพและใบอนุญาตแก้ไขโดยเจ้าหน้าที่สภาฯ เท่านั้น</div>
           <button class="btn btn-ghost btn-block" onclick="logout()">ออกจากระบบ</button>
         </aside>
@@ -328,6 +338,7 @@
             <div><h2>ข้อมูลส่วนตัวของฉัน</h2><p class="section-sub" id="profileSubtitle" style="margin:0;"></p></div>
             <button class="btn btn-primary" id="profEditAllBtn" type="button">แก้ไขข้อมูล</button>
           </div>
+          <div class="mc-grid prof-cards" id="profCards" aria-label="บัตรสมาชิกและใบอนุญาต"></div>
           <div id="profSummary"></div>
       <form id="profileForm" class="edit-panel" style="display:none;">
         <div class="edit-head"><h3>แก้ไขข้อมูล</h3><button type="button" class="btn btn-ghost btn-sm" id="profEditCloseBtn">ปิด</button></div>
@@ -525,6 +536,7 @@
 <script src="agency-data.js"></script>
 <script src="universities-data.js"></script>
 <script src="api.js"></script>
+<script src="member-ui.js"></script>
 <script src="manual-link.js"></script>
 <script src="register.js"></script>
 <script src="wizard.js"></script>
