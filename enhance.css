@@ -279,3 +279,16 @@ body.sticky-footer > footer.site-footer { margin-top: auto; flex-shrink: 0; }
 .id-prefix-list { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.86rem; }
 .id-prefix-list b { color: var(--navy); margin-right: 4px; }
 @media print { .photo-card, .adm-photo { display: none !important; } }
+
+/* v4.1: หน้าเริ่มต้นผู้ปฏิบัติงาน — เหลือตัวเลือกชุดเดียว (เดิมมีทั้งแท็บและปุ่มที่ทำงานเหมือนกัน) */
+.gate-choices { display: grid; gap: 10px; }
+.gate-choice { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; text-align: left; cursor: pointer;
+  padding: 14px 44px 14px 16px; border-radius: 12px; border: 1.5px solid var(--navy); background: #fff; color: var(--navy); font: inherit; position: relative;
+  transition: background-color .15s ease, box-shadow .15s ease; min-height: 56px; }
+.gate-choice::after { content: ''; position: absolute; right: 18px; top: 50%; width: 9px; height: 9px; border-top: 2.5px solid currentColor; border-right: 2.5px solid currentColor; transform: translateY(-50%) rotate(45deg); }
+.gate-choice:hover { background: var(--blue-soft); }
+.gate-choice:focus-visible { outline: 3px solid var(--blue-line); outline-offset: 2px; }
+.gate-choice.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.gate-choice.primary:hover { background: var(--blue-dark); }
+.gate-choice-t { font-weight: 700; font-size: 1rem; }
+.gate-choice-d { font-size: 0.82rem; opacity: .85; }

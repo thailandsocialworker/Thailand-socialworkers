@@ -52,14 +52,17 @@
             <div id="thaidLoginAlert" class="mt-8"></div>
           </div>
           <div class="pad">
-            <div class="seg-tabs">
-              <button type="button" class="on" id="gateTabLogin" onclick="showView('loginView')">เข้าสู่ระบบ</button>
-              <button type="button" id="gateTabRegister" onclick="showView('registerView')">ลงทะเบียนใหม่</button>
-            </div>
-            <p class="text-soft text-sm" style="margin:0 0 12px;">เลือก “เข้าสู่ระบบ” หากเคยลงทะเบียนไว้แล้ว หรือ “ลงทะเบียนใหม่” หากยังไม่เคยมีบัญชี<span id="thaidRegisterHint" style="display:none;"> (หรือใช้ปุ่ม ThaiD ด้านบนเพื่อลงทะเบียนอัตโนมัติ)</span></p>
-            <div class="flex gap-8">
-              <button class="btn btn-navy" style="flex:1;" onclick="showView('loginView')">เข้าสู่ระบบ</button>
-              <button class="btn btn-primary" style="flex:1;" onclick="showView('registerView')">ลงทะเบียนใหม่</button>
+            <h3 style="margin:0 0 4px;">เริ่มต้นใช้งาน</h3>
+            <p class="text-soft text-sm" style="margin:0 0 14px;">เลือกตามสถานะของท่าน<span id="thaidRegisterHint" style="display:none;"> หรือใช้ปุ่ม ThaiD ด้านบนเพื่อลงทะเบียนอัตโนมัติ</span></p>
+            <div class="gate-choices">
+              <button type="button" class="gate-choice" onclick="showView('loginView')">
+                <span class="gate-choice-t">เข้าสู่ระบบ</span>
+                <span class="gate-choice-d">เคยลงทะเบียนไว้แล้ว ใช้เลขบัตรประชาชนและรหัสผ่าน</span>
+              </button>
+              <button type="button" class="gate-choice primary" onclick="showView('registerView')">
+                <span class="gate-choice-t">ลงทะเบียนใหม่</span>
+                <span class="gate-choice-d">ยังไม่เคยมีบัญชีในระบบนี้</span>
+              </button>
             </div>
           </div>
         </div>
@@ -516,7 +519,7 @@
       <p>ข้อมูลบางส่วน (ชื่อ-นามสกุล ตำแหน่ง หน่วยงาน สถานะใบอนุญาต) อาจแสดงต่อสาธารณะผ่านระบบตรวจสอบใบอนุญาตออนไลน์ของสภาฯ เพื่อประโยชน์ในการคุ้มครองประชาชนผู้รับบริการ</p>
 
       <h4>สิทธิของท่าน</h4>
-      <p>ท่านมีสิทธิขอเข้าถึง แก้ไข ลบ หรือถอนความยินยอมข้อมูลของท่านได้ตลอดเวลา โดยติดต่อ thaisocialworkcouncil@gmail.com</p>
+      <p>ท่านมีสิทธิขอเข้าถึง แก้ไข ลบ หรือถอนความยินยอมข้อมูลของท่านได้ตลอดเวลา โดยติดต่อ thailand.socialworker@gmail.com</p>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-navy btn-sm" onclick="closePdpaModal()">ปิดหน้าต่างนี้</button>
@@ -527,7 +530,7 @@
 <footer class="site-footer">
   <div class="container">
     <div>© สภาวิชาชีพสังคมสงเคราะห์ · ระบบฐานข้อมูลผู้ปฏิบัติงานสังคมสงเคราะห์ประเทศไทย</div>
-    <div>ข้อเสนอแนะ: thaisocialworkcouncil@gmail.com</div>
+    <div>ข้อเสนอแนะ: thailand.socialworker@gmail.com</div>
 
   </div>
 </footer>
