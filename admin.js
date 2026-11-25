@@ -1113,42 +1113,176 @@ document.getElementById('disciplineForm').addEventListener('submit', async (e) =
   } catch (err) { toast('บันทึกไม่สำเร็จ: ' + err.message, 'error'); }
 });
 
-// ---------------- Agencies ----------------
+// ---------------- Agencies (ค้นหา / เพิ่ม / แก้ไข / ลบ) ----------------
 let agenciesCache = [];
+let agencyEditing = null;   // ระเบียนที่กำลังแก้ไข (null = เพิ่มใหม่)
+let agencyLimit = 50;       // แสดงทีละ 50 แถว (รายชื่อหน่วยงานมีหลายร้อยรายการ)
+const agencyNorm = v => String(v || '').trim().toLowerCase();
+
+function agencyMatches(a, q, type) {
+  if (type && a.AgencyType !== type) return false;
+  if (!q) return true;
+  return [a.AgencyName, a.Sangkad, a.Department, a.Province, a.AgencyType].some(v => agencyNorm(v).indexOf(q) !== -1);
+}
+
+function renderAgencies() {
+  const body = document.getElementById('agenciesTableBody');
+  const q = agencyNorm(document.getElementById('agencyFilter').value);
+  const type = document.getElementById('agencyTypeFilter').value;
+  const rows = agenciesCache.filter(a => agencyMatches(a, q, type));
+  const shown = rows.slice(0, agencyLimit);
+  const edit = can('agencies');
+  document.getElementById('agencyCount').textContent = rows.length === agenciesCache.length
+    ? `ทั้งหมด ${agenciesCache.length.toLocaleString('th-TH')} หน่วยงาน`
+    : `พบ ${rows.length.toLocaleString('th-TH')} จาก ${agenciesCache.length.toLocaleString('th-TH')} หน่วยงาน`;
+  const more = document.getElementById('agencyMoreBtn');
+  more.hidden = rows.length <= shown.length;
+  more.textContent = `แสดงเพิ่ม (เหลืออีก ${(rows.length - shown.length).toLocaleString('th-TH')})`;
+  if (!rows.length) { body.innerHTML = `<tr><td colspan="5" class="text-soft">${agenciesCache.length ? 'ไม่พบหน่วยงานที่ตรงกับคำค้น' : 'ยังไม่มีหน่วยงาน'}</td></tr>`; return; }
+  body.innerHTML = shown.map(a => {
+    const sameAsDept = agencyNorm(a.AgencyName) === agencyNorm(a.Department);
+    return `<tr data-id="${escapeHtml(a.AgencyID)}">
+      <td><b>${escapeHtml(a.AgencyName || a.Department || '-')}</b>${sameAsDept ? '<div class="text-sm text-soft">ระดับกรม</div>' : ''}</td>
+      <td><div>${escapeHtml(a.Sangkad || '-')}</div>${a.Department && !sameAsDept ? `<div class="text-sm text-soft">${escapeHtml(a.Department)}</div>` : ''}</td>
+      <td>${escapeHtml(a.Province || '-')}</td>
+      <td><span class="chip">${escapeHtml(a.AgencyType || '-')}</span></td>
+      <td class="row-actions">${edit ? `<button type="button" class="btn btn-ghost btn-sm" data-act="edit">แก้ไข</button>` : ''}</td>
+    </tr>`;
+  }).join('');
+}
+
 async function loadAgencies() {
   try {
     const { items } = await Api.adminAgencies();
-    agenciesCache = items;
-    document.getElementById('agenciesTableBody').innerHTML = items.length ? items.map(a => `
-      <tr><td>${escapeHtml(a.Sangkad || '-')}</td><td>${escapeHtml(a.Department || '-')}</td><td>${escapeHtml(a.AgencyName || '-')}</td><td>${escapeHtml(a.AgencyType || '-')}</td></tr>
-    `).join('') : '<tr><td colspan="4" class="text-soft">ไม่มีข้อมูล</td></tr>';
+    agenciesCache = items.slice().sort((a, b) => String(a.Sangkad || '').localeCompare(String(b.Sangkad || ''), 'th') || String(a.AgencyName || '').localeCompare(String(b.AgencyName || ''), 'th'));
+    renderAgencies();
   } catch (e) {
-    document.getElementById('agenciesTableBody').innerHTML = `<tr><td colspan="4" class="text-soft">โหลดไม่สำเร็จ: ${escapeHtml(e.message)}</td></tr>`;
+    document.getElementById('agenciesTableBody').innerHTML = `<tr><td colspan="5" class="text-soft">โหลดไม่สำเร็จ: ${escapeHtml(e.message)}</td></tr>`;
   }
 }
 
-function openAgencyForm() {
-  document.getElementById('agencyForm').reset();
-  document.getElementById('agf_departmentSelect').innerHTML = '<option value="">เลือกสังกัดก่อน</option>';
-  document.getElementById('agf_departmentOther').style.display = 'none';
-  document.getElementById('agencyFormWrap').style.display = '';
-  document.getElementById('agencyFormWrap').scrollIntoView({ behavior: 'smooth' });
+(function wireAgencyTab() {
+  const f = document.getElementById('agencyFilter'), t = document.getElementById('agencyTypeFilter');
+  let timer;
+  f.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { agencyLimit = 50; renderAgencies(); }, 150); });
+  t.addEventListener('change', () => { agencyLimit = 50; renderAgencies(); });
+  document.getElementById('agencyMoreBtn').addEventListener('click', () => { agencyLimit += 100; renderAgencies(); });
+  document.getElementById('agenciesTableBody').addEventListener('click', e => {
+    const b = e.target.closest('[data-act="edit"]');
+    if (b) openAgencyForm(b.closest('tr').dataset.id);
+  });
+  // จังหวัด (ไม่ผูกกับ dropdown อำเภอ/ตำบล)
+  const prov = document.getElementById('agf_province');
+  if (window.THAI_ADDRESS && prov) {
+    window.THAI_ADDRESS.provinces.slice().sort((a, b) => a.name.localeCompare(b.name, 'th')).forEach(p => {
+      const o = document.createElement('option'); o.value = p.name; o.textContent = p.name; prov.appendChild(o);
+    });
+  }
+  document.getElementById('agf_name').addEventListener('input', updateRenameHint);
+  document.getElementById('agencyDeleteBtn').addEventListener('click', deleteAgency);
+})();
+
+function setSelectValue(sel, v) {
+  if (!v) { sel.value = ''; return; }
+  if (![...sel.options].some(o => o.value === v)) { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); }
+  sel.value = v;
+}
+
+function openAgencyForm(id) {
+  const form = document.getElementById('agencyForm');
+  const wrap = document.getElementById('agencyFormWrap');
+  form.reset();
+  document.getElementById('agencyFormAlert').innerHTML = '';
+  const deptSel = document.getElementById('agf_departmentSelect'), deptOther = document.getElementById('agf_departmentOther');
+  deptSel.innerHTML = '<option value="">เลือกสังกัดก่อน</option>';
+  deptOther.style.display = 'none'; deptOther.value = '';
+  agencyEditing = id ? agenciesCache.find(a => String(a.AgencyID) === String(id)) || null : null;
+  const a = agencyEditing;
+  document.getElementById('agencyFormTitle').textContent = a ? 'แก้ไขหน่วยงาน' : 'เพิ่มหน่วยงาน';
+  document.getElementById('agencyFormSub').textContent = a ? `รหัส ${a.AgencyID} · ${a.AgencyName || a.Department || ''}` : 'หน่วยงานใหม่จะปรากฏเป็นตัวเลือกในแบบฟอร์มทันทีหลังบันทึก';
+  document.getElementById('agencyDeleteBtn').hidden = !a;
+  form.AgencyID.value = a ? a.AgencyID : '';
+  if (a) {
+    const sangSel = document.getElementById('agf_sangkadSelect');
+    setSelectValue(sangSel, a.Sangkad || '');
+    sangSel.dispatchEvent(new Event('change'));             // เติมรายการกรมของสังกัดนี้
+    if (a.Department) {
+      if ([...deptSel.options].some(o => o.value === a.Department)) deptSel.value = a.Department;
+      else { deptSel.value = 'อื่นๆ'; deptOther.style.display = ''; deptOther.value = a.Department; }
+    }
+    setSelectValue(document.getElementById('agf_type'), a.AgencyType || 'ภาครัฐ');  // หลัง change ของสังกัด (ซึ่งตั้งประเภทตามสังกัด)
+    setSelectValue(document.getElementById('agf_province'), a.Province || '');
+    form.AgencyName.value = agencyNorm(a.AgencyName) === agencyNorm(a.Department) ? '' : (a.AgencyName || '');
+  }
+  updateRenameHint();
+  wrap.style.display = '';
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => document.getElementById('agf_name').focus({ preventScroll: true }), 300);
+}
+
+function closeAgencyForm() {
+  document.getElementById('agencyFormWrap').style.display = 'none';
+  agencyEditing = null;
+}
+
+function agencyFormData() {
+  const data = Object.fromEntries(new FormData(document.getElementById('agencyForm')).entries());
+  if (!data.AgencyID) delete data.AgencyID;
+  const deptOther = document.getElementById('agf_departmentOther');
+  if (data.Department === 'อื่นๆ') data.Department = deptOther.value.trim();
+  data.AgencyName = (data.AgencyName || '').trim() || data.Department; // เว้นว่าง = ระดับกรม
+  return data;
+}
+
+function updateRenameHint() {
+  const wrap = document.getElementById('agf_renameWrap');
+  const a = agencyEditing;
+  if (!a) { wrap.hidden = true; return; }
+  const name = (document.getElementById('agf_name').value.trim()) || (agencyFormData().Department || '');
+  const changed = name && agencyNorm(name) !== agencyNorm(a.AgencyName);
+  wrap.hidden = !changed;
+  const n = (typeof peopleCache !== 'undefined' ? peopleCache : []).filter(p => agencyNorm(p.AgencyName) === agencyNorm(a.AgencyName)).length;
+  document.getElementById('agf_renameCount').textContent = n ? `(${n.toLocaleString('th-TH')} คน)` : '';
 }
 
 document.getElementById('agencyForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
-  if (!data.AgencyID) delete data.AgencyID;
-  const deptOther = document.getElementById('agf_departmentOther');
-  if (data.Department === 'อื่นๆ' && deptOther.value.trim()) data.Department = deptOther.value.trim();
-  if (!data.AgencyName) data.AgencyName = data.Department; // เว้นว่างชื่อหน่วยงานเฉพาะ = ใช้ชื่อกรมแทน (ระดับกรม)
+  const data = agencyFormData();
+  const alertEl = document.getElementById('agencyFormAlert');
+  if (!data.AgencyName) { alertEl.innerHTML = '<div class="alert alert-error">กรุณาระบุชื่อหน่วยงาน หรือเลือกสังกัดและกรม</div>'; return; }
+  // กันชื่อซ้ำ (ชื่อเดียวกันในจังหวัดเดียวกัน)
+  const dup = agenciesCache.find(x => String(x.AgencyID) !== String(data.AgencyID || '') && agencyNorm(x.AgencyName) === agencyNorm(data.AgencyName) && agencyNorm(x.Province) === agencyNorm(data.Province));
+  if (dup) { alertEl.innerHTML = `<div class="alert alert-error">มีหน่วยงานชื่อนี้${data.Province ? 'ในจังหวัดนี้' : ''}อยู่แล้ว (รหัส ${escapeHtml(dup.AgencyID)})</div>`; return; }
+  const renameWrap = document.getElementById('agf_renameWrap');
+  const renamePersons = !renameWrap.hidden && document.getElementById('agf_rename').checked;
+  const btn = document.getElementById('agencySaveBtn');
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
   try {
-    await Api.adminUpsertAgency(adminToken, data);
-    toast('บันทึกสำเร็จ');
-    document.getElementById('agencyFormWrap').style.display = 'none';
-    loadAgencies();
-  } catch (err) { toast('บันทึกไม่สำเร็จ: ' + err.message, 'error'); }
+    const r = await Api.adminUpsertAgency(adminToken, data, renamePersons);
+    toast(r.renamed ? `บันทึกแล้ว และปรับชื่อในข้อมูลผู้ปฏิบัติงาน ${r.renamed} คน` : 'บันทึกสำเร็จ');
+    closeAgencyForm();
+    await loadAgencies();
+    if (r.renamed && typeof loadPeople === 'function') loadPeople();
+  } catch (err) {
+    alertEl.innerHTML = `<div class="alert alert-error">บันทึกไม่สำเร็จ: ${escapeHtml(err.message === 'duplicate_agency' ? 'มีหน่วยงานชื่อนี้อยู่แล้ว' : adminErrText(err.message))}</div>`;
+  } finally { btn.disabled = false; btn.textContent = 'บันทึก'; }
 });
+
+async function deleteAgency() {
+  const a = agencyEditing;
+  if (!a) return;
+  let inUse = 0;
+  try { inUse = (await Api.adminDeleteAgency(adminToken, a.AgencyID, false)).inUse || 0; }
+  catch (e) { if (e.message === 'unknown_action') { toast('ระบบหลังบ้านยังไม่ได้อัปเดต (ต้อง Deploy Code.gs เวอร์ชันใหม่)', 'error'); return; } toast(adminErrText(e.message), 'error'); return; }
+  const msg = `ลบ "${a.AgencyName}" ออกจากรายชื่อหน่วยงานหรือไม่?` + (inUse ? `\n\nมีผู้ปฏิบัติงาน ${inUse} คนใช้ชื่อนี้อยู่ — ข้อมูลของคนเหล่านั้นไม่เปลี่ยน แต่ชื่อนี้จะไม่อยู่ในตัวเลือกอีก` : '');
+  if (!(await confirmDialog(msg, { title: 'ลบหน่วยงาน', okText: 'ลบ' }))) return;
+  try {
+    await Api.adminDeleteAgency(adminToken, a.AgencyID, true);
+    toast('ลบหน่วยงานแล้ว');
+    closeAgencyForm();
+    loadAgencies();
+  } catch (e) { toast('ลบไม่สำเร็จ: ' + adminErrText(e.message), 'error'); }
+}
 
 // ---------------- Audit ----------------
 async function loadAudit() {

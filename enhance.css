@@ -304,3 +304,25 @@ body.sticky-footer > footer.site-footer { margin-top: auto; flex-shrink: 0; }
   .mc-member { flex-direction: row; align-items: center; width: 100%; justify-content: space-between; padding-top: 8px; border-top: 1px dashed var(--divider); }
   .mc-grid.one .mc-dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ===================== v4.3: หัวข้อแต่ละหน้าในหลังบ้าน + หน้าหน่วยงาน ===================== */
+.admin-main .page-head { align-items: center; margin: 4px 0 20px; padding: 0 0 16px; border-bottom: 1px solid var(--divider); }
+.admin-main .page-head > div:first-child { position: relative; padding-left: 16px; min-width: 0; }
+.admin-main .page-head > div:first-child::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 5px; border-radius: 3px; background: var(--blue); }
+.admin-main .page-head h2 { font-size: 1.7rem; line-height: 1.25; color: var(--navy); font-weight: 700; letter-spacing: 0; }
+.admin-main .page-head p { font-size: 0.92rem; color: var(--ink-2); margin-top: 4px; max-width: 72ch; }
+@media (max-width: 720px) {
+  .admin-main .page-head { margin-top: 0; }
+  .admin-main .page-head h2 { font-size: 1.35rem; }
+  .admin-main .page-head .page-actions { width: 100%; }
+}
+
+.agency-form-card { margin-bottom: 18px; border-color: var(--blue-line); box-shadow: 0 6px 20px rgba(14, 36, 69, .08); }
+.agency-rename { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 14px; padding: 10px 12px; background: var(--blue-soft); border-radius: 10px; font-size: 0.88rem; cursor: pointer; }
+.agency-rename input { width: 18px; height: 18px; margin-top: 2px; flex-shrink: 0; }
+.agency-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.agency-toolbar input[type=search] { flex: 1 1 320px; max-width: 460px; }
+.agency-toolbar select { width: auto; min-width: 150px; }
+.agency-table td { vertical-align: top; }
+.agency-table td:first-child { min-width: 260px; }
+.agency-table .row-actions { text-align: right; white-space: nowrap; width: 1%; }

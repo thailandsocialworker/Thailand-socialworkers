@@ -87,7 +87,8 @@ const Api = (() => {
     // เตรียมไว้สำหรับเชื่อมระบบสมาชิกของสภาฯ: ส่งเหตุการณ์ใบอนุญาตเป็นชุด (ดู LicenseHistory.gs)
     adminSyncLicenseHistory: (token, records, applyToCurrent) => post('adminSyncLicenseHistory', { token, records, applyToCurrent }),
     universities: () => get('universities'),
-    adminUpsertAgency: (token, data) => post('adminUpsertAgency', { token, data }),
+    adminUpsertAgency: (token, data, renamePersons) => post('adminUpsertAgency', { token, data, renamePersons: !!renamePersons }),
+    adminDeleteAgency: (token, agencyId, confirm) => post('adminDeleteAgency', { token, agencyId, confirm: confirm === true }),
     adminUpsertCourse: (token, data) => post('adminUpsertCourse', { token, data }),
     // รูปประจำตัว (Photo.gs): op = upload | delete | visibility — ใช้ token (ThaiD) หรือเลขบัตร+รหัสผ่านตาม session ปัจจุบัน
     selfPhoto: (session, op, extra) => post('selfPhoto', Object.assign({ op },

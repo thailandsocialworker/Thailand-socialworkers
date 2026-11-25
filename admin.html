@@ -82,6 +82,7 @@
 
       <!-- ---------- TAB: Dashboard (ฉบับเต็มสำหรับเจ้าหน้าที่) ---------- -->
       <div id="tabDashboard" class="tab-panel active">
+        <header class="page-head"><div><h2>ภาพรวม</h2><p>ตัวชี้วัดหลักของผู้ปฏิบัติงานทั่วประเทศ เทียบกับเดือนก่อนและปีก่อน</p></div></header>
         <div class="grid grid-4" id="adminKpi">
           <div class="card kpi"><div class="num">-</div><div class="label">ผู้ปฏิบัติงานทั้งหมด</div></div>
           <div class="card kpi accent-green"><div class="num">-</div><div class="label">อัตรามีใบอนุญาต</div></div>
@@ -142,7 +143,7 @@
 
       <!-- ---------- TAB: รายงาน (Standard Reports) ---------- -->
       <div id="tabReports" class="tab-panel">
-        <p class="text-sm text-soft">เลือกประเภทรายงานที่ต้องการดู — ข้อมูลคำนวณจากฐานข้อมูลปัจจุบันแบบเรียลไทม์</p>
+        <header class="page-head"><div><h2>รายงาน</h2><p>เลือกประเภทรายงานที่ต้องการดู — ข้อมูลคำนวณจากฐานข้อมูลปัจจุบันแบบเรียลไทม์ และส่งออกเป็น Excel ได้</p></div></header>
         <div class="flex gap-12" style="flex-wrap:wrap; align-items:center;">
           <select id="reportSelect" style="max-width:420px;">
             <option value="overview">1. สรุปภาพรวมทั่วประเทศ</option>
@@ -164,7 +165,8 @@
 
       <!-- ---------- TAB: People ---------- -->
       <div id="tabPeople" class="tab-panel">
-        <div class="flex-between mt-8">
+        <header class="page-head"><div><h2>ข้อมูลผู้ปฏิบัติงาน</h2><p>ค้นหา เพิ่ม แก้ไข และนำเข้าข้อมูลผู้ปฏิบัติงาน — ค้นได้ด้วยชื่อ รหัส เลขที่ใบอนุญาต หรือเลขบัตรประชาชน</p></div></header>
+        <div class="flex-between">
           <div class="people-filter-wrap"><input type="text" id="peopleFilter" placeholder="ชื่อ / รหัส / เลขที่ใบอนุญาต / เลขบัตร 4 หลักท้าย" style="max-width:320px;"><span id="peopleCount" class="text-sm text-soft" role="status" aria-live="polite"></span></div>
           <div class="flex gap-8">
             <button class="btn btn-ghost btn-sm" id="importTemplateBtn" type="button">⬇ ดาวน์โหลดแม่แบบ Excel</button>
@@ -408,10 +410,7 @@
 
       <!-- ---------- TAB: Discipline ---------- -->
       <div id="tabDiscipline" class="tab-panel">
-        <div class="flex-between mt-8">
-          <p class="text-soft text-sm mb-0">บันทึกและติดตามกรณีการดำเนินการทางวินัยของผู้ประกอบวิชาชีพ (จำกัดสิทธิ์เฉพาะผู้ดูแลระบบ)</p>
-          <button class="btn btn-primary btn-sm" id="addDisciplineBtn" onclick="openDisciplineForm()">+ เพิ่มบันทึก</button>
-        </div>
+        <header class="page-head"><div><h2>วินัยและจริยธรรม</h2><p>บันทึกและติดตามกรณีการดำเนินการทางวินัยของผู้ประกอบวิชาชีพ (จำกัดสิทธิ์เฉพาะผู้ดูแลระบบ)</p></div><div class="page-actions"><button class="btn btn-primary btn-sm" id="addDisciplineBtn" onclick="openDisciplineForm()">+ เพิ่มบันทึก</button></div></header>
         <div class="table-scroll mt-16">
           <table class="data-table">
             <thead><tr><th>รหัสประจำตัว</th><th>วันที่</th><th>ประเภทกรณี</th><th>บทลงโทษ</th><th>สถานะคดี</th></tr></thead>
@@ -441,49 +440,58 @@
 
       <!-- ---------- TAB: Agencies ---------- -->
       <div id="tabAgencies" class="tab-panel">
-        <div class="flex-between mt-8">
-          <p class="text-soft text-sm mb-0">จัดการรายชื่อหน่วยงาน/สังกัด</p>
-          <button class="btn btn-primary btn-sm" onclick="openAgencyForm()">+ เพิ่มหน่วยงาน</button>
-        </div>
-        <div class="table-scroll mt-16">
-          <table class="data-table">
-            <thead><tr><th>สังกัด</th><th>กรม</th><th>ชื่อหน่วยงาน</th><th>ประเภท</th></tr></thead>
-            <tbody id="agenciesTableBody"><tr><td colspan="4" class="text-soft">กำลังโหลด...</td></tr></tbody>
-          </table>
-        </div>
-        <div id="agencyFormWrap" style="display:none;" class="card mt-16 side-panel">
-          <h3 style="margin-top:0;">เพิ่ม/แก้ไขหน่วยงาน</h3>
-          <form id="agencyForm">
+        <header class="page-head"><div><h2>หน่วยงาน/สังกัด</h2><p>รายชื่อหน่วยงานที่ใช้เป็นตัวเลือกในแบบฟอร์มลงทะเบียนและข้อมูลผู้ปฏิบัติงาน — เพิ่ม แก้ไข หรือลบได้</p></div><div class="page-actions"><button class="btn btn-primary btn-sm" id="addAgencyBtn" onclick="openAgencyForm()">+ เพิ่มหน่วยงาน</button></div></header>
+        <div id="agencyFormWrap" style="display:none;" class="card agency-form-card">
+          <div class="flex-between" style="align-items:flex-start; gap:12px;">
+            <div><h3 style="margin:0;" id="agencyFormTitle">เพิ่มหน่วยงาน</h3><p class="text-sm text-soft mb-0" id="agencyFormSub"></p></div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="closeAgencyForm()" aria-label="ปิดแบบฟอร์ม">✕</button>
+          </div>
+          <form id="agencyForm" class="mt-16">
             <input type="hidden" name="AgencyID">
             <div class="form-grid">
-              <div class="field"><label>สังกัด</label>
+              <div class="field" style="grid-column:1 / -1;"><label for="agf_name">ชื่อหน่วยงานเฉพาะ <span class="text-soft">(เว้นว่าง = ใช้ชื่อกรม)</span></label>
+                <input type="text" name="AgencyName" id="agf_name" placeholder="เช่น โรงพยาบาลเชียงใหม่ / สำนักงานพัฒนาสังคมฯ จังหวัดเชียงใหม่">
+              </div>
+              <div class="field"><label for="agf_sangkadSelect">สังกัด</label>
                 <select name="Sangkad" class="agency-sangkad" id="agf_sangkadSelect"><option value="">เลือกสังกัด</option></select>
               </div>
-              <div class="field"><label>กรม</label>
+              <div class="field"><label for="agf_departmentSelect">กรม</label>
                 <select name="Department" class="agency-department" id="agf_departmentSelect"><option value="">เลือกสังกัดก่อน</option></select>
                 <input type="text" id="agf_departmentOther" class="department-other" placeholder="โปรดระบุชื่อกรม" style="display:none; margin-top:8px;">
               </div>
-              <div class="field"><label>ประเภทหน่วยงาน</label>
-                <select name="AgencyType" class="agency-type"><option>ภาครัฐ</option><option>ท้องถิ่น</option><option>เอกชน</option><option>NGO</option><option>อื่นๆ</option></select>
+              <div class="field"><label for="agf_type">ประเภทหน่วยงาน</label>
+                <select name="AgencyType" class="agency-type" id="agf_type"><option>ภาครัฐ</option><option>ท้องถิ่น</option><option>เอกชน</option><option>NGO</option><option>อื่นๆ</option></select>
               </div>
-              <div class="field" style="grid-column:1 / -1;"><label>ชื่อหน่วยงานเฉพาะ (ถ้ามี — เว้นว่างหมายถึงระดับกรม)</label>
-                <input type="text" name="AgencyName" placeholder="เช่น โรงพยาบาลเชียงใหม่ / สำนักงานพัฒนาสังคมฯ จังหวัดเชียงใหม่">
+              <div class="field"><label for="agf_province">จังหวัด</label>
+                <select name="Province" id="agf_province"><option value="">ไม่ระบุ / ทั่วประเทศ</option></select>
               </div>
             </div>
+            <label class="agency-rename" id="agf_renameWrap" hidden><input type="checkbox" id="agf_rename" checked> <span>ปรับชื่อหน่วยงานในข้อมูลผู้ปฏิบัติงานที่ใช้ชื่อเดิมด้วย <b id="agf_renameCount"></b></span></label>
+            <div id="agencyFormAlert"></div>
             <div class="flex gap-12">
-              <button type="submit" class="btn btn-primary">บันทึก</button>
-              <button type="button" class="btn btn-ghost" onclick="document.getElementById('agencyFormWrap').style.display='none'">ยกเลิก</button>
+              <button type="submit" class="btn btn-primary" id="agencySaveBtn">บันทึก</button>
+              <button type="button" class="btn btn-ghost" onclick="closeAgencyForm()">ยกเลิก</button>
+              <button type="button" class="btn btn-danger btn-sm" id="agencyDeleteBtn" style="margin-left:auto;" hidden>ลบหน่วยงานนี้</button>
             </div>
           </form>
         </div>
+        <div class="agency-toolbar">
+          <input type="search" id="agencyFilter" placeholder="ค้นหาชื่อหน่วยงาน / สังกัด / กรม / จังหวัด" aria-label="ค้นหาหน่วยงาน">
+          <select id="agencyTypeFilter" aria-label="กรองตามประเภท"><option value="">ทุกประเภท</option><option>ภาครัฐ</option><option>ท้องถิ่น</option><option>เอกชน</option><option>NGO</option><option>อื่นๆ</option></select>
+          <span id="agencyCount" class="text-sm text-soft" role="status" aria-live="polite"></span>
+        </div>
+        <div class="table-scroll mt-8">
+          <table class="data-table agency-table">
+            <thead><tr><th>ชื่อหน่วยงาน</th><th>สังกัด / กรม</th><th>จังหวัด</th><th>ประเภท</th><th><span class="sr-only">จัดการ</span></th></tr></thead>
+            <tbody id="agenciesTableBody"><tr><td colspan="5" class="text-soft">กำลังโหลด...</td></tr></tbody>
+          </table>
+        </div>
+        <div class="text-center mt-8"><button type="button" class="btn btn-ghost btn-sm" id="agencyMoreBtn" hidden>แสดงเพิ่ม</button></div>
       </div>
 
       <!-- ---------- TAB: จัดการผู้ดูแลระบบ (เฉพาะ superadmin) ---------- -->
       <div id="tabAdmins" class="tab-panel">
-        <div class="flex-between mt-8">
-          <p class="text-soft text-sm mb-0">เพิ่มผู้ดูแลระบบ กำหนดสิทธิ์การเข้าถึงรายข้อ ระงับบัญชี และรีเซ็ตรหัสผ่าน — การเปลี่ยนสิทธิ์/ระงับบัญชีมีผลทันทีในคำขอถัดไปของผู้ใช้นั้น</p>
-          <button class="btn btn-primary btn-sm" id="addAdminBtn">+ เพิ่มผู้ดูแลระบบ</button>
-        </div>
+        <header class="page-head"><div><h2>จัดการผู้ดูแลระบบ</h2><p>เพิ่มผู้ดูแลระบบ กำหนดสิทธิ์รายข้อ ระงับบัญชี และรีเซ็ตรหัสผ่าน — การเปลี่ยนแปลงมีผลทันทีในคำขอถัดไปของผู้ใช้นั้น</p></div><div class="page-actions"><button class="btn btn-primary btn-sm" id="addAdminBtn">+ เพิ่มผู้ดูแลระบบ</button></div></header>
         <div class="card mt-16" id="thaidSettingCard">
           <div class="flex-between" style="flex-wrap:wrap; gap:12px;">
             <div>
@@ -547,7 +555,8 @@
 
       <!-- ---------- TAB: บัญชีของฉัน (ทุกบทบาทเห็น) ---------- -->
       <div id="tabAccount" class="tab-panel">
-        <div class="card mt-8">
+        <header class="page-head"><div><h2>บัญชีของฉัน</h2><p>ข้อมูลบัญชี สิทธิ์การใช้งาน รหัสผ่าน และการยืนยันตัวตนสองขั้นตอน</p></div></header>
+        <div class="card">
           <h3 style="margin-top:0;">ข้อมูลบัญชีและสิทธิ์ของฉัน</h3>
           <p class="text-sm" id="accountInfoText"></p>
           <div id="accountPermList" class="text-sm"></div>
