@@ -125,8 +125,10 @@
             <input type="text" id="prefixOther" placeholder="โปรดระบุคำนำหน้า" style="display:none; margin-top:8px;">
           </div>
           <div class="field"><label>เลขบัตรประชาชน * (13 หลัก)</label><input type="text" name="NationalID" id="regNationalId" maxlength="13" required></div>
-          <div class="field"><label>เลขที่สมาชิก หรือ เลขที่ใบอนุญาต (ใช้ยืนยันตัวตน)</label><input type="text" id="regClaimCode" autocomplete="off" placeholder="กรอกเฉพาะหากท่านเคยมีข้อมูลกับสภาฯ แล้ว">
-            <span class="text-sm text-soft">ถ้าสภาฯ มีข้อมูลของท่านอยู่แล้ว ต้องกรอกเลขนี้เพื่อยืนยันตัวตนก่อนดึงข้อมูลหรือรับสิทธิ์บัญชี</span></div>
+          <div class="field"><label for="regClaimCode">รหัสยืนยันทางอีเมล (เฉพาะผู้ที่สภาฯ มีข้อมูลอยู่แล้ว)</label>
+            <div class="flex gap-8"><input type="text" id="regClaimCode" autocomplete="one-time-code" inputmode="numeric" maxlength="6" placeholder="รหัส 6 หลัก" style="flex:1;">
+              <button type="button" class="btn btn-outline btn-sm" id="regSendClaimCode" style="white-space:nowrap;">ส่งรหัสไปที่อีเมล</button></div>
+            <span class="text-sm text-soft" id="regClaimHint">ถ้าสภาฯ มีข้อมูลของท่านอยู่แล้ว ระบบจะส่งรหัสไปยังอีเมลที่สภาฯ มีในทะเบียน ใช้ยืนยันตัวตนก่อนดึงข้อมูลหรือรับสิทธิ์บัญชี</span></div>
           <div class="field"><label>ชื่อ *</label><input type="text" name="FirstName" required></div>
           <div class="field"><label>นามสกุล *</label><input type="text" name="LastName" required></div>
           <div class="field"><label>เบอร์โทรศัพท์ *</label><input type="tel" name="Phone" required></div>
@@ -331,6 +333,9 @@
             </div>
             <label class="photo-public"><input type="checkbox" id="profPhotoPublic" disabled> <span>แสดงรูปในผลการค้นหาสาธารณะ<small>ไม่เลือก = เห็นเฉพาะท่านและเจ้าหน้าที่สภาฯ</small></span></label>
             <p class="photo-help">ใช้รูปหน้าตรงที่เห็นใบหน้าชัดเจน (JPG, PNG หรือ WEBP) ระบบครอปเป็นสี่เหลี่ยมจัตุรัสและย่อขนาดให้อัตโนมัติ</p>
+            <div class="photo-card-h" style="margin:14px 0 0; padding-top:12px; border-top:1px solid var(--divider);"><b>ผลการค้นหาสาธารณะ</b></div>
+            <label class="photo-public"><input type="checkbox" id="profAgencyPublic"> <span>แสดงชื่อหน่วยงานที่ทำงาน<small>ไม่เลือก = แสดงเพียงตำแหน่งและจังหวัด ไม่บอกสถานที่ทำงาน</small></span></label>
+            <p class="photo-help">หน้าค้นหาสาธารณะแสดงเฉพาะชื่อ ตำแหน่ง จังหวัด สถานะสมาชิกภาพ และเลขที่/สถานะ/วันหมดอายุใบอนุญาต ไม่แสดงเลขบัตร ที่อยู่ เบอร์โทร อีเมล หรือเลขที่สมาชิก</p>
             <div id="profPhotoAlert" role="status" aria-live="polite"></div>
           </div>
           <div class="profile-note"><b>ข้อมูลของท่าน</b>แก้ไขข้อมูลติดต่อ ที่อยู่ และประวัติการทำงานได้เอง ข้อมูลสมาชิกภาพและใบอนุญาตแก้ไขโดยเจ้าหน้าที่สภาฯ เท่านั้น</div>

@@ -33,8 +33,8 @@
     const s = String(p.MembershipStatus || 'none');
     const days = daysUntil(p.MembershipExpireDate);
     if (s === 'active' && days !== null && days < 0) return { key: 'expired', tone: 'amber', label: 'หมดอายุ', days };
-    if (s === 'active') return { key: 'active', tone: days !== null && days <= 90 ? 'amber' : 'green', label: days !== null && days <= 90 ? 'ใกล้หมดอายุ' : 'สมาชิกภาพปกติ', days };
-    if (s === 'expired') return { key: 'expired', tone: 'amber', label: 'หมดอายุ', days };
+    if (s === 'active') return { key: 'active', tone: days !== null && days <= 90 ? 'amber' : 'green', label: days !== null && days <= 90 ? 'ใกล้หมดอายุ' : (p.MembershipExpireDate === undefined ? 'เป็นสมาชิก' : 'สมาชิกภาพปกติ'), days };
+    if (s === 'expired') return { key: 'expired', tone: 'amber', label: p.MembershipExpireDate === undefined ? 'สมาชิกภาพหมดอายุ' : 'หมดอายุ', days };
     if (s === 'suspended') return { key: s, tone: 'red', label: 'ถูกพัก', days };
     return { key: 'none', tone: 'gray', label: 'ไม่เป็นสมาชิก', days: null };
   }
@@ -104,21 +104,35 @@
       : `<span class="${cls || 'mc-avatar'}" aria-hidden="true">${initial(p)}</span>`;
   }
 
-  // การ์ดผลการค้นหาสาธารณะ
+  // การ์ดผลการค้นหาสาธารณะ — แสดงเท่าที่จำเป็นต่อการตรวจสอบใบอนุญาต (TOR 5.2.6.7)
+  // ไม่มีเลขที่สมาชิก/วันที่บัตรสมาชิก/วันที่ออกใบอนุญาต/รหัสภายใน; หน่วยงานแสดงเฉพาะเมื่อเจ้าของเปิดเอง (เซิร์ฟเวอร์ส่งมาเฉพาะกรณีนั้น)
+  function publicLicensePanel(p) {
+    const st = licenseState(p);
+    const has = st.key !== 'none' || p.LicenseNumber;
+    return `<section class="mc-panel" aria-label="ใบอนุญาตประกอบวิชาชีพ">
+      <div class="mc-panel-h"><span class="mc-title">${ICON.license}ใบอนุญาตประกอบวิชาชีพ</span>${badge(st)}</div>
+      ${has ? `<dl class="mc-dl">
+        ${row('เลขที่ใบอนุญาต', E(p.LicenseNumber), true)}
+        ${row('วันหมดอายุ', p.LicenseExpireDate ? fmtDate(p.LicenseExpireDate) : '')}
+      </dl>${daysNote(st)}` : '<p class="mc-empty">ไม่มีใบอนุญาตประกอบวิชาชีพในทะเบียน</p>'}
+    </section>`;
+  }
   function resultCard(p) {
     const name = `${E(p.Prefix || '')}${E(p.FirstName)} ${E(p.LastName)}`;
-    const sub = [p.PositionType, p.AgencyName, p.Province].filter(Boolean).map(E).join(' · ') || '-';
+    const sub = [p.PositionType, p.Province].filter(Boolean).map(E).join(' · ') || '-';
     const specs = String(p.Specializations || '').split(/[,،、]\s*/).map(s => s.trim()).filter(Boolean);
+    const ms = membershipState(p);
     return `<article class="mc-card">
       <header class="mc-head">
         ${avatarHtml(p)}
         <div class="mc-who">
           <h3 class="mc-name">${name}</h3>
           <div class="mc-sub">${sub}</div>
-          ${p.PersonID ? `<div class="mc-code">รหัส <span class="mono">${E(p.PersonID)}</span></div>` : ''}
+          ${p.AgencyName ? `<div class="mc-code">${E(p.AgencyName)}</div>` : ''}
         </div>
+        <div class="mc-member"><span class="mc-member-h">${ICON.member}สมาชิกภาพ</span>${badge(ms)}</div>
       </header>
-      <div class="mc-grid">${membershipPanel(p)}${licensePanel(p)}</div>
+      <div class="mc-grid one">${publicLicensePanel(p)}</div>
       ${specs.length ? `<div class="mc-specs"><span class="mc-specs-h">ความเชี่ยวชาญ</span>${specs.map(s => `<span class="chip chip-blue">${E(s)}</span>`).join('')}</div>` : ''}
     </article>`;
   }

@@ -93,6 +93,9 @@ const Api = (() => {
     selfPhoto: (session, op, extra) => post('selfPhoto', Object.assign({ op },
       session && session.mode === 'token' ? { token: session.token } : { nationalId: session && session.nationalId, password: session && session.password }, extra || {})),
     adminPhoto: (token, personId) => get('adminPhoto', { token, personId }),
+    selfPrivacy: (session, agencyPublic) => post('selfPrivacy', Object.assign({ agencyPublic: !!agencyPublic },
+      session && session.mode === 'token' ? { token: session.token } : { nationalId: session && session.nationalId, password: session && session.password })),
+    requestClaimCode: nationalId => post('requestClaimCode', { nationalId }),
     adminPersonPhoto: (token, personId, op, extra) => post('adminPersonPhoto', Object.assign({ token, personId, op }, extra || {})),
     // ปรับรหัสผู้ปฏิบัติงานให้ขึ้นต้นตามตำแหน่ง (PersonId.gs) — confirm=false คือดูรายการก่อน
     adminMigratePersonIds: (token, confirm) => post('adminMigratePersonIds', { token, confirm: confirm === true }),

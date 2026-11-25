@@ -56,6 +56,8 @@
     const cb = document.getElementById('profPhotoPublic');
     cb.checked = pub; cb.disabled = !has;
     document.getElementById('profPhotoState').textContent = !has ? 'ยังไม่มีรูป' : pub ? 'แสดงต่อสาธารณะ' : 'เฉพาะท่านและเจ้าหน้าที่';
+    const ag = document.getElementById('profAgencyPublic');
+    if (ag) ag.checked = !!cur && (cur.AgencyPublic === true || cur.AgencyPublic === 'TRUE' || cur.AgencyPublic === 'true');
     renderAvatar();
   }
   function renderMemberExtras(person) {
@@ -95,6 +97,14 @@
       await Api.selfPhoto(currentSession, 'delete');
       cur.Photo = ''; cur.PhotoPublic = false;
       toast('ลบรูปแล้ว');
+    });
+  });
+  document.getElementById('profAgencyPublic').addEventListener('change', async e => {
+    const want = e.target.checked;
+    await photoCall(null, async () => {
+      const r = await Api.selfPrivacy(currentSession, want);
+      cur.AgencyPublic = r.AgencyPublic;
+      toast(want ? 'ชื่อหน่วยงานจะแสดงในผลการค้นหาสาธารณะ' : 'ซ่อนชื่อหน่วยงานจากผลการค้นหาสาธารณะแล้ว');
     });
   });
   document.getElementById('profPhotoPublic').addEventListener('change', async e => {

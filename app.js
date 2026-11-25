@@ -33,7 +33,8 @@ function statusBadge(status, kind) {
   return '';
 }
 
-function renderResults(results) {
+function renderResults(results, info) {
+  info = info || {};
   const wrap = document.getElementById('searchResultsWrap');
   const dash = document.getElementById('dashboardWrap');
   const list = document.getElementById('searchResults');
@@ -42,15 +43,19 @@ function renderResults(results) {
   if (!results.length) {
     wrap.style.display = '';
     dash.style.display = 'none';
-    count.textContent = 'ไม่พบข้อมูลที่ตรงกับคำค้นหา';
-    list.innerHTML = `<div class="empty-state card"><div class="icon"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div><div>ลองค้นหาด้วยชื่อ-นามสกุลเต็ม หรือเลขที่ใบอนุญาต/สมาชิก</div></div>`;
+    // ค้นหาสาธารณะรับเฉพาะชื่อเต็ม + นามสกุล หรือเลขที่ใบอนุญาตทั้งเลข (ป้องกันการดึงรายชื่อทั้งฐาน)
+    const msg = info.hint === 'need_full_name'
+      ? { t: 'กรุณาพิมพ์ชื่อและนามสกุล', d: 'พิมพ์ชื่อเต็มเว้นวรรคตามด้วยนามสกุล (อย่างน้อย 2 ตัวอักษรแรก) เช่น “สมชาย ใจดี” หรือใช้เลขที่ใบอนุญาตทั้งเลข' }
+      : { t: 'ไม่พบข้อมูลที่ตรงกับคำค้นหา', d: 'ตรวจสอบการสะกดชื่อ-นามสกุล หรือกรอกเลขที่ใบอนุญาตให้ครบทุกหลัก' };
+    count.textContent = msg.t;
+    list.innerHTML = `<div class="empty-state card"><div class="icon"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div><div>${msg.d}</div></div>`;
     return;
   }
 
   wrap.style.display = '';
   dash.style.display = 'none';
-  count.textContent = `พบ ${results.length} รายการ`;
-  // การ์ดผลการค้นหา: สมาชิกภาพ/ใบอนุญาตแยกเป็น 2 ส่วน พร้อมเลขที่ วันออก วันหมดอายุ และรูป (ถ้าเจ้าของยินยอม) — member-ui.js
+  count.textContent = `พบ ${results.length} รายการ` + (info.more ? ' (แสดง 10 รายการแรก — ระบุนามสกุลให้ครบเพื่อให้ผลแคบลง)' : '');
+  // การ์ดสาธารณะแสดงเท่าที่จำเป็นต่อการตรวจสอบใบอนุญาต — member-ui.js
   list.innerHTML = results.map(p => MemberUI.resultCard(p)).join('');
 }
 
@@ -62,8 +67,8 @@ async function doSearch() {
     return;
   }
   try {
-    const { results } = await Api.search(q);
-    renderResults(results);
+    const res = await Api.search(q);
+    renderResults(res.results || [], res);
   } catch (e) {
     toast('ค้นหาไม่สำเร็จ: ' + e.message, 'error');
   }

@@ -438,8 +438,8 @@ async function pullFromCouncil(section) {
   if (!data.found) { toast('ไม่พบข้อมูลที่เคยลงทะเบียนไว้กับสภาฯ สำหรับเลขบัตรประชาชนนี้ กรุณากรอกข้อมูลด้วยตนเอง', 'error'); return; }
   if (data.verificationRequired) {
     toast(data.canVerify
-      ? (data.verified === false ? 'เลขที่สมาชิก/เลขที่ใบอนุญาตไม่ตรงกับข้อมูลของสภาฯ' : 'พบข้อมูลของท่านที่สภาฯ — กรุณากรอก "เลขที่สมาชิก หรือ เลขที่ใบอนุญาต" ในข้อ 1 เพื่อยืนยันตัวตนก่อน แล้วกดดึงข้อมูลอีกครั้ง')
-      : 'พบข้อมูลของท่านที่สภาฯ แต่ไม่มีเลขสำหรับยืนยันตัวตน กรุณาเข้าสู่ระบบด้วย ThaiD หรือติดต่อสภาฯ', 'error');
+      ? (data.verified === false ? 'รหัสยืนยันไม่ถูกต้องหรือหมดอายุ กรุณากด "ส่งรหัสไปที่อีเมล" ใหม่' : 'พบข้อมูลของท่านที่สภาฯ — กด "ส่งรหัสไปที่อีเมล" ในข้อ 1 แล้วกรอกรหัส 6 หลักที่ได้รับ จากนั้นกดดึงข้อมูลอีกครั้ง')
+      : 'พบข้อมูลของท่านที่สภาฯ แต่ไม่มีอีเมลในทะเบียนสำหรับส่งรหัสยืนยัน กรุณาเข้าสู่ระบบด้วย ThaiD หรือติดต่อสภาฯ', 'error');
     return;
   }
   const p = data.person, f = form();
@@ -522,9 +522,9 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
       : err.message === 'pdpa_consent_required'
       ? 'กรุณายืนยันความยินยอม PDPA ก่อนลงทะเบียน'
       : err.message === 'claim_verification_failed'
-      ? 'สภาฯ มีข้อมูลของเลขบัตรนี้อยู่แล้ว กรุณากรอก "เลขที่สมาชิก หรือ เลขที่ใบอนุญาต" ให้ตรงกับข้อมูลของสภาฯ เพื่อยืนยันตัวตน'
+      ? 'สภาฯ มีข้อมูลของเลขบัตรนี้อยู่แล้ว กรุณากด "ส่งรหัสไปที่อีเมล" ในข้อ 1 แล้วกรอกรหัส 6 หลักที่ได้รับเพื่อยืนยันตัวตน'
       : err.message === 'claim_requires_thaid'
-      ? 'สภาฯ มีข้อมูลของเลขบัตรนี้อยู่แล้วแต่ไม่มีเลขสำหรับยืนยันตัวตน กรุณาเข้าสู่ระบบด้วย ThaiD หรือติดต่อสภาฯ'
+      ? 'สภาฯ มีข้อมูลของเลขบัตรนี้อยู่แล้วแต่ไม่มีอีเมลในทะเบียนสำหรับส่งรหัสยืนยัน กรุณาเข้าสู่ระบบด้วย ThaiD หรือติดต่อสภาฯ'
       : err.message === 'too_many_attempts'
       ? 'ยืนยันตัวตนผิดหลายครั้งเกินไป กรุณารอ 15 นาทีแล้วลองใหม่'
       : 'ลงทะเบียนไม่สำเร็จ: ' + err.message;
@@ -666,3 +666,27 @@ document.getElementById('profileForm').addEventListener('submit', async (e) => {
 });
 
 showView('gateView');
+
+
+// ---- ส่งรหัสยืนยันทางอีเมล (แทนการใช้เลขที่สมาชิก/เลขที่ใบอนุญาตซึ่งค้นดูได้จากหน้าสาธารณะ)
+(function () {
+  const btn = document.getElementById('regSendClaimCode');
+  if (!btn) return;
+  const hint = document.getElementById('regClaimHint');
+  const setHint = (msg, bad) => { hint.textContent = msg; hint.style.color = bad ? 'var(--red-dark)' : ''; };
+  btn.addEventListener('click', async () => {
+    const nationalId = document.getElementById('regNationalId').value.trim();
+    if (!/^\d{13}$/.test(nationalId)) { setHint('กรุณากรอกเลขบัตรประชาชน 13 หลักก่อน', true); document.getElementById('regNationalId').focus(); return; }
+    btn.disabled = true; const old = btn.textContent; btn.textContent = 'กำลังส่ง...';
+    try {
+      const r = await Api.requestClaimCode(nationalId);
+      prefillCache = null;
+      if (r.sent) { setHint(`ส่งรหัสไปที่ ${r.email} แล้ว (ใช้ได้ 15 นาที) — ถ้าไม่พบ ให้ดูในโฟลเดอร์จดหมายขยะ`); document.getElementById('regClaimCode').focus(); }
+      else if (r.reason === 'no_email') setHint('สภาฯ มีข้อมูลของท่าน แต่ไม่มีอีเมลในทะเบียน กรุณาเข้าสู่ระบบด้วย ThaiD หรือติดต่อสภาฯ เพื่อเพิ่มอีเมล', true);
+      else if (r.reason === 'send_failed') setHint('ส่งอีเมลไม่สำเร็จในขณะนี้ กรุณาลองใหม่ภายหลัง', true);
+      else setHint('ไม่พบข้อมูลเดิมของเลขบัตรนี้ที่ต้องยืนยัน — ลงทะเบียนต่อได้เลยโดยไม่ต้องใช้รหัส');
+    } catch (err) {
+      setHint(err.message === 'too_many_attempts' ? 'ขอรหัสบ่อยเกินไป กรุณารอ 15 นาทีแล้วลองใหม่' : err.message === 'unknown_action' ? 'ระบบหลังบ้านยังไม่ได้อัปเดต' : 'ส่งรหัสไม่สำเร็จ: ' + err.message, true);
+    } finally { btn.disabled = false; btn.textContent = old; }
+  });
+})();

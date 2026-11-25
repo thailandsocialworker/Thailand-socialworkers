@@ -292,3 +292,15 @@ body.sticky-footer > footer.site-footer { margin-top: auto; flex-shrink: 0; }
 .gate-choice.primary:hover { background: var(--blue-dark); }
 .gate-choice-t { font-weight: 700; font-size: 1rem; }
 .gate-choice-d { font-size: 0.82rem; opacity: .85; }
+
+/* v4.2: การ์ดสาธารณะแบบย่อ (เปิดเผยเท่าที่จำเป็น) */
+.mc-grid.one { grid-template-columns: 1fr; }
+.mc-grid.one .mc-dl { grid-template-columns: repeat(2, minmax(0, 220px)); }
+.mc-member { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.mc-member-h { display: inline-flex; align-items: center; gap: 4px; font-size: 0.74rem; color: var(--muted); }
+.mc-member-h .ui-icon { width: 14px; height: 14px; }
+@media (max-width: 640px) {
+  .mc-head { flex-wrap: wrap; }
+  .mc-member { flex-direction: row; align-items: center; width: 100%; justify-content: space-between; padding-top: 8px; border-top: 1px dashed var(--divider); }
+  .mc-grid.one .mc-dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
