@@ -74,6 +74,7 @@
         <button class="tab-btn" data-tab="tabAudit" data-perm="audit">บันทึกการใช้งาน (Audit Log)</button>
         <button class="tab-btn" data-tab="tabEmail" data-perm="@superadmin">อีเมลแจ้งเตือน</button>
         <button class="tab-btn" id="tabBtnAdmins" data-tab="tabAdmins" data-perm="@superadmin">จัดการผู้ดูแลระบบ</button>
+        <button class="tab-btn" data-tab="tabSettings" data-perm="@superadmin">ตั้งค่าระบบ</button>
         <button class="tab-btn" data-tab="tabAccount">บัญชีของฉัน</button>
         </nav>
         <div class="sb-user"><div class="nm"><b id="adminWelcome"></b><span>เข้าสู่ระบบอยู่</span></div><button class="sb-logout" onclick="adminLogout()">ออกจากระบบ</button></div>
@@ -196,44 +197,6 @@
             <button class="btn btn-primary" id="importConfirmBtn">เริ่มนำเข้า</button>
             <button class="btn btn-ghost" id="importCancelBtn">ยกเลิก</button>
           </div>
-        </div>
-
-        <div class="card mt-16" id="councilPullCard">
-          <div class="flex-between" style="flex-wrap:wrap; gap:12px;">
-            <div>
-              <h3 style="margin:0 0 4px;">ฟังก์ชัน “ดึงข้อมูลจากสภาฯ”</h3>
-              <p class="text-sm text-soft" style="margin:0;" id="councilPullText">กำลังตรวจสอบสถานะ...</p>
-            </div>
-            <button class="btn btn-outline btn-sm" id="councilPullBtn" disabled>-</button>
-          </div>
-          <p class="text-sm text-soft mt-8 mb-0">ค่าเริ่มต้นคือปิด เมื่อปิด ปุ่ม “ดึงข้อมูลจากสภาฯ” ในหน้าลงทะเบียนจะถูกซ่อน และระบบหลังบ้านปฏิเสธคำขอดึงข้อมูลด้วย ให้กดเปิดเมื่อเชื่อมต่อข้อมูลสภาฯ ได้แล้ว</p>
-        </div>
-
-        <div class="card mt-16" id="idMigrateCard" style="display:none;">
-          <h3 style="margin:0 0 4px;">รหัสผู้ปฏิบัติงานตามตำแหน่ง</h3>
-          <p class="text-sm text-soft" style="margin:0 0 10px;">ระเบียนใหม่ได้รหัสขึ้นต้นตามประเภทตำแหน่งอัตโนมัติ เลขรันต่อเนื่องทั้งระบบและไม่ซ้ำกัน</p>
-          <div class="id-prefix-list">
-            <span><b class="mono">SW</b> นักสังคมสงเคราะห์</span><span><b class="mono">SWA</b> ผู้ช่วยนักสังคมสงเคราะห์</span>
-            <span><b class="mono">SD</b> นักพัฒนาสังคม</span><span><b class="mono">CD</b> นักพัฒนาชุมชน</span><span><b class="mono">OT</b> อื่น ๆ / ยังไม่ระบุ</span>
-          </div>
-          <p class="text-sm text-soft mt-8">รหัสเดิม (เช่น P00001) และคนที่เปลี่ยนตำแหน่งภายหลังจะยังใช้รหัสเดิมจนกว่าจะกดปรับ การปรับจะเปลี่ยนเฉพาะอักษรนำหน้า เลขเดิมคงไว้ (P00001 → SW00001) และแก้ทุกชีตที่อ้างอิงให้ด้วย ควรสำรองไฟล์ Google Sheets ก่อน และแจ้งผู้ที่เคยได้รับรหัสเดิม</p>
-          <div class="flex gap-12" style="flex-wrap:wrap;">
-            <button class="btn btn-outline btn-sm" id="idMigratePreviewBtn">ตรวจสอบรายการที่จะเปลี่ยน</button>
-            <button class="btn btn-primary btn-sm" id="idMigrateRunBtn" style="display:none;">ยืนยันปรับรหัส</button>
-          </div>
-          <div id="idMigrateResult" class="mt-8" aria-live="polite"></div>
-        </div>
-
-        <div class="card mt-16" id="manualSettingCard">
-          <h3 style="margin:0 0 4px;">คู่มือผู้ใช้งานทั่วไป</h3>
-          <p class="text-sm text-soft" style="margin:0 0 12px;" id="manualSettingText">กำลังตรวจสอบสถานะ...</p>
-          <div class="form-group"><label for="manualTitle">ชื่อที่แสดงบนปุ่ม (ไม่บังคับ)</label><input type="text" id="manualTitle" maxlength="120" placeholder="คู่มือการใช้งานสำหรับผู้ปฏิบัติงาน"></div>
-          <div class="form-group"><label for="manualUrl">วิธีที่ 1: วางลิงก์คู่มือ (เช่น ลิงก์แชร์ Google Drive)</label>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;"><input type="url" id="manualUrl" style="flex:1; min-width:220px;" placeholder="https://..."><button class="btn btn-primary btn-sm" id="manualSaveLinkBtn">บันทึกลิงก์</button></div></div>
-          <div class="form-group"><label for="manualFile">วิธีที่ 2: แนบไฟล์ PDF หรือ DOCX (ไม่เกิน 5 MB)</label>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;"><input type="file" id="manualFile" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"><button class="btn btn-outline btn-sm" id="manualUploadBtn">อัปโหลด</button></div></div>
-          <button class="btn btn-outline btn-sm" id="manualClearBtn" style="color:var(--red-bad);">ลบคู่มือ (ซ่อนปุ่มจากหน้าเว็บ)</button>
-          <p class="text-sm text-soft mt-8 mb-0">ไฟล์ที่แนบจะถูกเก็บใน Google Drive ของเจ้าของสคริปต์และตั้งเป็น “ทุกคนที่มีลิงก์ดูได้” การบันทึกใหม่จะแทนที่ของเดิม</p>
         </div>
 
         <div class="table-scroll mt-16">
@@ -529,17 +492,6 @@
       <!-- ---------- TAB: จัดการผู้ดูแลระบบ (เฉพาะ superadmin) ---------- -->
       <div id="tabAdmins" class="tab-panel">
         <header class="page-head"><div><h2>จัดการผู้ดูแลระบบ</h2><p>เพิ่มผู้ดูแลระบบ กำหนดสิทธิ์รายข้อ ระงับบัญชี และรีเซ็ตรหัสผ่าน — การเปลี่ยนแปลงมีผลทันทีในคำขอถัดไปของผู้ใช้นั้น</p></div><div class="page-actions"><button class="btn btn-primary btn-sm" id="addAdminBtn">+ เพิ่มผู้ดูแลระบบ</button></div></header>
-        <div class="card mt-16" id="thaidSettingCard">
-          <div class="flex-between" style="flex-wrap:wrap; gap:12px;">
-            <div>
-              <h3 style="margin:0 0 4px;">การเข้าสู่ระบบด้วย ThaiD</h3>
-              <p class="text-sm text-soft" style="margin:0;" id="thaidSettingText">กำลังตรวจสอบสถานะ...</p>
-            </div>
-            <button class="btn btn-outline btn-sm" id="thaidToggleBtn" disabled>-</button>
-          </div>
-          <p class="text-sm text-soft mt-8 mb-0">เมื่อเปิด ปุ่ม ThaiD จะแสดงในหน้าผู้ปฏิบัติงานและหน้าผู้ดูแลระบบ เมื่อปิด ปุ่มจะถูกซ่อนและระบบหลังบ้านปฏิเสธการเข้าสู่ระบบด้วย ThaiD ด้วย (เปิดได้เมื่อ configureThaiD() ตั้งค่าแล้วเท่านั้น)</p>
-        </div>
-
         <div class="table-scroll mt-16">
           <table class="data-table">
             <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อที่แสดง</th><th>บทบาท</th><th>สถานะ</th><th>สิทธิ์</th><th>MFA</th><th>เข้าสู่ระบบล่าสุด</th><th></th></tr></thead>
@@ -587,6 +539,59 @@
               <button type="button" class="btn btn-ghost" id="adminFormCancel">ยกเลิก</button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- ---------- TAB: ตั้งค่าระบบ (เฉพาะ superadmin) ---------- -->
+      <div id="tabSettings" class="tab-panel">
+        <header class="page-head"><div><h2>ตั้งค่าระบบ</h2><p>การเข้าสู่ระบบด้วย ThaiD การดึงข้อมูลจากสภาฯ รหัสผู้ปฏิบัติงานตามตำแหน่ง และคู่มือผู้ใช้งานทั่วไป — มีผลกับผู้ใช้ทุกคนทันที และบันทึกใน Audit Log</p></div></header>
+        <div class="card mt-16" id="thaidSettingCard">
+          <div class="flex-between" style="flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3 style="margin:0 0 4px;">การเข้าสู่ระบบด้วย ThaiD</h3>
+              <p class="text-sm text-soft" style="margin:0;" id="thaidSettingText">กำลังตรวจสอบสถานะ...</p>
+            </div>
+            <button class="btn btn-outline btn-sm" id="thaidToggleBtn" disabled>-</button>
+          </div>
+          <p class="text-sm text-soft mt-8 mb-0">เมื่อเปิด ปุ่ม ThaiD จะแสดงในหน้าผู้ปฏิบัติงานและหน้าผู้ดูแลระบบ เมื่อปิด ปุ่มจะถูกซ่อนและระบบหลังบ้านปฏิเสธการเข้าสู่ระบบด้วย ThaiD ด้วย (เปิดได้เมื่อ configureThaiD() ตั้งค่าแล้วเท่านั้น)</p>
+        </div>
+
+        <div class="card mt-16" id="councilPullCard">
+          <div class="flex-between" style="flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3 style="margin:0 0 4px;">ฟังก์ชัน “ดึงข้อมูลจากสภาฯ”</h3>
+              <p class="text-sm text-soft" style="margin:0;" id="councilPullText">กำลังตรวจสอบสถานะ...</p>
+            </div>
+            <button class="btn btn-outline btn-sm" id="councilPullBtn" disabled>-</button>
+          </div>
+          <p class="text-sm text-soft mt-8 mb-0">ค่าเริ่มต้นคือปิด เมื่อปิด ปุ่ม “ดึงข้อมูลจากสภาฯ” ในหน้าลงทะเบียนจะถูกซ่อน และระบบหลังบ้านปฏิเสธคำขอดึงข้อมูลด้วย ให้กดเปิดเมื่อเชื่อมต่อข้อมูลสภาฯ ได้แล้ว</p>
+        </div>
+
+        <div class="card mt-16" id="idMigrateCard" style="display:none;">
+          <h3 style="margin:0 0 4px;">รหัสผู้ปฏิบัติงานตามตำแหน่ง</h3>
+          <p class="text-sm text-soft" style="margin:0 0 10px;">ระเบียนใหม่ได้รหัสขึ้นต้นตามประเภทตำแหน่งอัตโนมัติ เลขรันต่อเนื่องทั้งระบบและไม่ซ้ำกัน</p>
+          <div class="id-prefix-list">
+            <span><b class="mono">SW</b> นักสังคมสงเคราะห์</span><span><b class="mono">SWA</b> ผู้ช่วยนักสังคมสงเคราะห์</span>
+            <span><b class="mono">SD</b> นักพัฒนาสังคม</span><span><b class="mono">CD</b> นักพัฒนาชุมชน</span><span><b class="mono">OT</b> อื่น ๆ / ยังไม่ระบุ</span>
+          </div>
+          <p class="text-sm text-soft mt-8">รหัสเดิม (เช่น P00001) และคนที่เปลี่ยนตำแหน่งภายหลังจะยังใช้รหัสเดิมจนกว่าจะกดปรับ การปรับจะเปลี่ยนเฉพาะอักษรนำหน้า เลขเดิมคงไว้ (P00001 → SW00001) และแก้ทุกชีตที่อ้างอิงให้ด้วย ควรสำรองไฟล์ Google Sheets ก่อน และแจ้งผู้ที่เคยได้รับรหัสเดิม</p>
+          <div class="flex gap-12" style="flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" id="idMigratePreviewBtn">ตรวจสอบรายการที่จะเปลี่ยน</button>
+            <button class="btn btn-primary btn-sm" id="idMigrateRunBtn" style="display:none;">ยืนยันปรับรหัส</button>
+          </div>
+          <div id="idMigrateResult" class="mt-8" aria-live="polite"></div>
+        </div>
+
+        <div class="card mt-16" id="manualSettingCard">
+          <h3 style="margin:0 0 4px;">คู่มือผู้ใช้งานทั่วไป</h3>
+          <p class="text-sm text-soft" style="margin:0 0 12px;" id="manualSettingText">กำลังตรวจสอบสถานะ...</p>
+          <div class="form-group"><label for="manualTitle">ชื่อที่แสดงบนปุ่ม (ไม่บังคับ)</label><input type="text" id="manualTitle" maxlength="120" placeholder="คู่มือการใช้งานสำหรับผู้ปฏิบัติงาน"></div>
+          <div class="form-group"><label for="manualUrl">วิธีที่ 1: วางลิงก์คู่มือ (เช่น ลิงก์แชร์ Google Drive)</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;"><input type="url" id="manualUrl" style="flex:1; min-width:220px;" placeholder="https://..."><button class="btn btn-primary btn-sm" id="manualSaveLinkBtn">บันทึกลิงก์</button></div></div>
+          <div class="form-group"><label for="manualFile">วิธีที่ 2: แนบไฟล์ PDF หรือ DOCX (ไม่เกิน 5 MB)</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;"><input type="file" id="manualFile" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"><button class="btn btn-outline btn-sm" id="manualUploadBtn">อัปโหลด</button></div></div>
+          <button class="btn btn-outline btn-sm" id="manualClearBtn" style="color:var(--red-bad);">ลบคู่มือ (ซ่อนปุ่มจากหน้าเว็บ)</button>
+          <p class="text-sm text-soft mt-8 mb-0">ไฟล์ที่แนบจะถูกเก็บใน Google Drive ของเจ้าของสคริปต์และตั้งเป็น “ทุกคนที่มีลิงก์ดูได้” การบันทึกใหม่จะแทนที่ของเดิม</p>
         </div>
       </div>
 
