@@ -16,7 +16,12 @@
       document.getElementById('profName').textContent = name;
       document.getElementById('profAvatar').textContent = (person.FirstName || 'ผ').charAt(0);
       renderMemberExtras(person);
-      document.getElementById('profPid').textContent = person.PersonID || '';
+      const pidEl = document.getElementById('profPid');
+      pidEl.textContent = person.PersonID || '';
+      if (person.ThaiDVerified === true || person.ThaiDVerified === 'TRUE' || person.ThaiDVerified === 'true') {
+        const t = document.createElement('span'); t.className = 'thaid-verified'; t.title = 'ยืนยันตัวตนด้วยแอป ThaiD แล้ว'; t.textContent = 'ยืนยันด้วย ThaiD';
+        pidEl.appendChild(document.createTextNode(' ')); pidEl.appendChild(t);
+      }
       const m = document.getElementById('profMeter'), n = document.getElementById('profLicNote');
       m.className = ''; n.className = 'lic-note'; n.textContent = ''; m.style.width = '0%';
       if (person.LicenseExpireDate) {
@@ -58,6 +63,13 @@
     document.getElementById('profPhotoState').textContent = !has ? 'ยังไม่มีรูป' : pub ? 'แสดงต่อสาธารณะ' : 'เฉพาะท่านและเจ้าหน้าที่';
     const ag = document.getElementById('profAgencyPublic');
     if (ag) ag.checked = !!cur && (cur.AgencyPublic === true || cur.AgencyPublic === 'TRUE' || cur.AgencyPublic === 'true');
+    const er = document.getElementById('profEmailReminders');
+    if (er) {
+      const hasMail = !!cur && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(cur.Email || ''));
+      er.checked = hasMail && !(cur.NotifyOptOut === true || cur.NotifyOptOut === 'TRUE' || cur.NotifyOptOut === 'true');
+      er.disabled = !hasMail;
+      er.closest('label').title = hasMail ? '' : 'เพิ่มอีเมลในข้อมูลติดต่อก่อน จึงจะรับอีเมลแจ้งเตือนได้';
+    }
     renderAvatar();
   }
   function renderMemberExtras(person) {
@@ -102,9 +114,17 @@
   document.getElementById('profAgencyPublic').addEventListener('change', async e => {
     const want = e.target.checked;
     await photoCall(null, async () => {
-      const r = await Api.selfPrivacy(currentSession, want);
+      const r = await Api.selfPrivacy(currentSession, { agencyPublic: want });
       cur.AgencyPublic = r.AgencyPublic;
       toast(want ? 'ชื่อหน่วยงานจะแสดงในผลการค้นหาสาธารณะ' : 'ซ่อนชื่อหน่วยงานจากผลการค้นหาสาธารณะแล้ว');
+    });
+  });
+  document.getElementById('profEmailReminders').addEventListener('change', async e => {
+    const want = e.target.checked;
+    await photoCall(null, async () => {
+      const r = await Api.selfPrivacy(currentSession, { emailReminders: want });
+      cur.NotifyOptOut = !r.EmailReminders;
+      toast(want ? 'จะได้รับอีเมลแจ้งเตือนก่อนหมดอายุ' : 'ปิดอีเมลแจ้งเตือนวันหมดอายุแล้ว');
     });
   });
   document.getElementById('profPhotoPublic').addEventListener('change', async e => {

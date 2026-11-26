@@ -94,8 +94,15 @@ const Api = (() => {
     selfPhoto: (session, op, extra) => post('selfPhoto', Object.assign({ op },
       session && session.mode === 'token' ? { token: session.token } : { nationalId: session && session.nationalId, password: session && session.password }, extra || {})),
     adminPhoto: (token, personId) => get('adminPhoto', { token, personId }),
-    selfPrivacy: (session, agencyPublic) => post('selfPrivacy', Object.assign({ agencyPublic: !!agencyPublic },
+    // changes = { agencyPublic } และ/หรือ { emailReminders } — ส่งเฉพาะค่าที่ต้องการเปลี่ยน (ค่าอื่นคงเดิม)
+    selfPrivacy: (session, changes) => post('selfPrivacy', Object.assign(typeof changes === 'object' && changes !== null ? changes : { agencyPublic: !!changes },
       session && session.mode === 'token' ? { token: session.token } : { nationalId: session && session.nationalId, password: session && session.password })),
+    // ศูนย์อีเมลแจ้งเตือน (Notify.gs — เฉพาะผู้ดูแลระบบสูงสุด)
+    adminEmailCenter: token => get('adminEmailCenter', { token }),
+    adminEmailPreview: (token, kind) => get('adminEmailPreview', { token, kind }),
+    adminSetEmailTypes: (token, types) => post('adminSetEmailTypes', { token, types }),
+    adminEmailTest: (token, kind) => post('adminEmailTest', { token, kind }),
+    adminRunReminders: (token, dryRun) => post('adminRunReminders', { token, dryRun: !!dryRun }),
     requestClaimCode: nationalId => post('requestClaimCode', { nationalId }),
     adminPersonPhoto: (token, personId, op, extra) => post('adminPersonPhoto', Object.assign({ token, personId, op }, extra || {})),
     // ปรับรหัสผู้ปฏิบัติงานให้ขึ้นต้นตามตำแหน่ง (PersonId.gs) — confirm=false คือดูรายการก่อน

@@ -72,6 +72,7 @@
         <button class="tab-btn" id="tabBtnDiscipline" data-tab="tabDiscipline" data-perm="discipline_view">วินัย/จริยธรรม</button>
         <button class="tab-btn" data-tab="tabAgencies" data-perm="agencies">หน่วยงาน</button>
         <button class="tab-btn" data-tab="tabAudit" data-perm="audit">บันทึกการใช้งาน (Audit Log)</button>
+        <button class="tab-btn" data-tab="tabEmail" data-perm="@superadmin">อีเมลแจ้งเตือน</button>
         <button class="tab-btn" id="tabBtnAdmins" data-tab="tabAdmins" data-perm="@superadmin">จัดการผู้ดูแลระบบ</button>
         <button class="tab-btn" data-tab="tabAccount">บัญชีของฉัน</button>
         </nav>
@@ -489,6 +490,42 @@
         <div class="text-center mt-8"><button type="button" class="btn btn-ghost btn-sm" id="agencyMoreBtn" hidden>แสดงเพิ่ม</button></div>
       </div>
 
+
+      <!-- ---------- TAB: อีเมลแจ้งเตือน (เฉพาะ superadmin — Notify.gs) ---------- -->
+      <div id="tabEmail" class="tab-panel">
+        <header class="page-head"><div><h2>อีเมลแจ้งเตือน</h2><p>อีเมลอัตโนมัติที่ระบบส่งถึงผู้ปฏิบัติงานและผู้ดูแลระบบ — เปิด/ปิดแต่ละประเภท ดูตัวอย่าง ส่งทดสอบ และตรวจสอบประวัติการส่ง</p></div>
+          <div class="page-actions"><button type="button" class="btn btn-outline btn-sm" id="emailRefreshBtn">รีเฟรช</button></div></header>
+        <div class="email-kpis" id="emailKpis" role="status" aria-live="polite"></div>
+        <div class="card mt-16">
+          <h3 style="margin:0 0 4px;">ประเภทอีเมล</h3>
+          <p class="text-sm text-soft" style="margin:0 0 10px;">อีเมลด้านความปลอดภัย (รหัสยืนยัน, OTP, แจ้งเตือนระบบ) ปิดไม่ได้ · "ดูตัวอย่าง" ใช้ข้อมูลสมมติ · "ส่งทดสอบ" ส่งถึงอีเมลในบัญชีของท่าน <span id="emailMyAddr"></span></p>
+          <div class="table-scroll">
+            <table class="data-table email-types">
+              <thead><tr><th>ประเภท</th><th>ส่งถึง</th><th>ส่งเมื่อ</th><th class="num">30 วัน</th><th>เปิดใช้</th><th><span class="sr-only">จัดการ</span></th></tr></thead>
+              <tbody id="emailTypesBody"><tr><td colspan="6" class="text-soft">กำลังโหลด...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card mt-16">
+          <div class="flex-between" style="flex-wrap:wrap; gap:12px;">
+            <div><h3 style="margin:0 0 4px;">แจ้งเตือนวันหมดอายุ</h3>
+              <p class="text-sm text-soft" style="margin:0;">ระบบตรวจทุกวันเวลา 08:00 และส่งเมื่อใบอนุญาต/สมาชิกภาพเหลือ 90 วัน, 30 วัน และเมื่อหมดอายุ (แต่ละขั้นส่งครั้งเดียว) · ข้ามผู้ที่ไม่มีอีเมล ผู้ที่เลือกไม่รับ และใบอนุญาตที่พักใช้/เพิกถอน</p></div>
+            <div class="page-actions"><button type="button" class="btn btn-outline btn-sm" id="reminderDryBtn">ตรวจรายการที่ถึงกำหนด</button> <button type="button" class="btn btn-primary btn-sm" id="reminderRunBtn">ส่งแจ้งเตือนตอนนี้</button></div>
+          </div>
+          <div id="reminderResult" class="mt-8"></div>
+        </div>
+        <div class="card mt-16">
+          <h3 style="margin:0 0 8px;">ประวัติการส่งล่าสุด</h3>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>เวลา</th><th>ประเภท</th><th>ผู้รับ</th><th>หัวเรื่อง</th><th>สถานะ</th></tr></thead>
+              <tbody id="emailLogBody"><tr><td colspan="5" class="text-soft">กำลังโหลด...</td></tr></tbody>
+            </table>
+          </div>
+          <p class="text-sm text-soft mt-8 mb-0">อีเมลผู้รับถูกปิดบังบางส่วน · รายการทั้งหมดอยู่ในชีต EmailLog · อีเมลที่ค้างเพราะโควตาหมดอยู่ในชีต EmailQueue และส่งซ้ำอัตโนมัติตี 1</p>
+        </div>
+      </div>
+
       <!-- ---------- TAB: จัดการผู้ดูแลระบบ (เฉพาะ superadmin) ---------- -->
       <div id="tabAdmins" class="tab-panel">
         <header class="page-head"><div><h2>จัดการผู้ดูแลระบบ</h2><p>เพิ่มผู้ดูแลระบบ กำหนดสิทธิ์รายข้อ ระงับบัญชี และรีเซ็ตรหัสผ่าน — การเปลี่ยนแปลงมีผลทันทีในคำขอถัดไปของผู้ใช้นั้น</p></div><div class="page-actions"><button class="btn btn-primary btn-sm" id="addAdminBtn">+ เพิ่มผู้ดูแลระบบ</button></div></header>
@@ -620,6 +657,20 @@
     </div>
 </div>
 </main>
+
+<!-- ตัวอย่างอีเมล -->
+<div class="modal-overlay" id="emailPreviewModal" hidden>
+  <div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-labelledby="emailPreviewTitle">
+    <div class="modal-header"><h3 id="emailPreviewTitle">ตัวอย่างอีเมล</h3></div>
+    <div class="modal-body">
+      <div class="email-subject"><span>หัวเรื่อง</span><b id="emailPreviewSubject"></b></div>
+      <div class="chip-filter" id="emailPreviewMode"><button type="button" class="on" data-m="html">แบบ HTML</button><button type="button" data-m="text">ข้อความล้วน</button></div>
+      <iframe id="emailPreviewFrame" class="email-frame" sandbox="" title="ตัวอย่างอีเมล"></iframe>
+      <pre id="emailPreviewText" class="email-text" hidden></pre>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" id="emailPreviewTestBtn" type="button">ส่งทดสอบถึงอีเมลของฉัน</button> <button class="btn btn-primary" id="emailPreviewCloseBtn" type="button">ปิด</button></div>
+  </div>
+</div>
 
 <!-- บังคับเปลี่ยนรหัสผ่านชั่วคราวก่อนใช้งาน -->
 <div class="modal-overlay" id="forcePwModal" hidden>

@@ -267,7 +267,7 @@ function loadAllAdminData() {
   if (can('discipline_view')) loadDiscipline();
   if (can('agencies')) loadAgencies();
   if (can('audit')) loadAudit();
-  if (adminRole === 'superadmin') { loadAdmins(); loadThaidSetting(); loadManualSetting(); loadCouncilPullSetting(); }
+  if (adminRole === 'superadmin') { loadAdmins(); loadThaidSetting(); loadManualSetting(); loadCouncilPullSetting(); loadEmailCenter(); }
 }
 
 // ---------------- Dashboard (ฉบับเต็มสำหรับเจ้าหน้าที่) ----------------
@@ -1888,3 +1888,109 @@ async function loadAdminPhotoBox(personId) {
     } finally { runBtn.disabled = false; }
   });
 })();
+
+
+// ================= อีเมลแจ้งเตือน (Notify.gs — เฉพาะ superadmin) =================
+let emailCenter = null, emailPreviewKind = null;
+const EMAIL_STATUS_TH = { sent: ['ส่งแล้ว', 'ok'], queued: ['รอส่ง (โควตาหมด)', 'warn'], failed: ['ไม่สำเร็จ', 'bad'], test: ['ส่งทดสอบ', 'info'] };
+const EMAIL_KIND_TH = kind => ((emailCenter && emailCenter.types.find(t => t.kind === kind)) || {}).label || kind;
+const emailErrText = code => ({ admin_email_missing: 'บัญชีของท่านยังไม่มีอีเมล — ตั้งค่าอีเมลที่แท็บ "บัญชีของฉัน" (การยืนยันตัวตนสองขั้นตอน) ก่อน',
+  email_quota_exceeded: 'โควตาการส่งอีเมลวันนี้หมดแล้ว ลองใหม่พรุ่งนี้', email_send_failed: 'ส่งอีเมลไม่สำเร็จ', rate_limited: 'ส่งทดสอบบ่อยเกินไป รอสักครู่',
+  unknown_action: 'ฝั่ง Apps Script ยังเป็นเวอร์ชันเก่า — วาง Notify.gs และไฟล์ .gs ที่อัปเดต แล้ว Deploy เวอร์ชันใหม่' }[code] || code);
+function fmtEmailTime(v) {
+  const d = new Date(v); if (isNaN(d)) return '-';
+  return d.toLocaleString('th-TH', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+async function loadEmailCenter() {
+  try { emailCenter = await Api.adminEmailCenter(adminToken); renderEmailCenter(); }
+  catch (err) {
+    document.getElementById('emailTypesBody').innerHTML = `<tr><td colspan="6"><div class="alert alert-error">${escapeHtml(emailErrText(err.message))}</div></td></tr>`;
+    document.getElementById('emailLogBody').innerHTML = '<tr><td colspan="5" class="text-soft">-</td></tr>';
+  }
+}
+function renderEmailCenter() {
+  const c = emailCenter;
+  const lr = c.lastRun;
+  const kpi = (label, value, note, tone) => `<div class="email-kpi ${tone || ''}"><span>${escapeHtml(label)}</span><b>${escapeHtml(String(value))}</b><small>${escapeHtml(note || '')}</small></div>`;
+  document.getElementById('emailKpis').innerHTML =
+    kpi('โควตาอีเมลคงเหลือวันนี้', c.quota === null ? 'ตรวจไม่ได้' : c.quota.toLocaleString('th-TH'), 'บัญชี Google ฟรีประมาณ 100 ฉบับ/วัน', c.quota !== null && c.quota < 20 ? 'warn' : '') +
+    kpi('ถึงกำหนดแจ้งเตือนวันนี้', c.dueToday.toLocaleString('th-TH') + ' ฉบับ', c.triggers.reminders ? 'ส่งอัตโนมัติ 08:00' : 'ยังไม่ได้ติดตั้งตัวตั้งเวลา', c.triggers.reminders ? '' : 'warn') +
+    kpi('รอส่งในคิว', c.queue.pending.toLocaleString('th-TH'), c.queue.failed ? 'ไม่สำเร็จถาวร ' + c.queue.failed : 'ส่งซ้ำอัตโนมัติตี 1', c.queue.failed ? 'bad' : '') +
+    kpi('รอบแจ้งเตือนล่าสุด', lr ? fmtEmailTime(lr.at) : 'ยังไม่เคยรัน', lr ? `ส่ง ${lr.sent} · คิว ${lr.queued} · เลื่อน ${lr.deferred}` : '');
+  document.getElementById('emailMyAddr').textContent = c.myEmail ? `(${c.myEmail})` : '(ยังไม่ได้ตั้งอีเมลในบัญชี)';
+  document.getElementById('emailTypesBody').innerHTML = c.types.map(t => `<tr>
+      <td><b>${escapeHtml(t.label)}</b>${t.optOut ? '<div class="text-sm text-soft">ผู้รับเลือกไม่รับได้</div>' : ''}</td>
+      <td>${escapeHtml(t.to)}</td>
+      <td class="text-sm">${escapeHtml(t.when)}</td>
+      <td class="num">${t.stats30.sent.toLocaleString('th-TH')}${t.stats30.failed ? ` <span class="badge badge-red" title="ไม่สำเร็จ">${t.stats30.failed}</span>` : ''}</td>
+      <td>${t.toggle
+        ? `<label class="switch"><input type="checkbox" data-email-toggle="${t.kind}" ${t.enabled ? 'checked' : ''} aria-label="เปิดใช้ ${escapeHtml(t.label)}"><span></span></label>`
+        : '<span class="badge badge-gray" title="อีเมลด้านความปลอดภัย ปิดไม่ได้">เปิดเสมอ</span>'}</td>
+      <td class="row-actions"><button type="button" class="btn btn-ghost btn-sm" data-email-preview="${t.kind}">ดูตัวอย่าง</button></td>
+    </tr>`).join('');
+  document.getElementById('emailLogBody').innerHTML = c.log.length ? c.log.map(l => {
+    const st = EMAIL_STATUS_TH[l.Status] || [l.Status, 'info'];
+    return `<tr><td class="nowrap">${fmtEmailTime(l.SentAt)}</td><td>${escapeHtml(EMAIL_KIND_TH(l.Kind))}</td><td class="mono">${escapeHtml(l.ToMasked)}</td><td class="text-sm">${escapeHtml(l.Subject)}</td><td><span class="email-st ${st[1]}">${escapeHtml(st[0])}</span></td></tr>`;
+  }).join('') : '<tr><td colspan="5" class="text-soft">ยังไม่มีการส่งอีเมล</td></tr>';
+}
+document.getElementById('emailRefreshBtn').addEventListener('click', loadEmailCenter);
+document.getElementById('emailTypesBody').addEventListener('change', async e => {
+  const cb = e.target.closest('[data-email-toggle]'); if (!cb) return;
+  const kind = cb.dataset.emailToggle, on = cb.checked;
+  cb.disabled = true;
+  try { emailCenter = await Api.adminSetEmailTypes(adminToken, { [kind]: on }); renderEmailCenter(); toast((on ? 'เปิด' : 'ปิด') + 'อีเมล "' + EMAIL_KIND_TH(kind) + '" แล้ว'); }
+  catch (err) { cb.checked = !on; toast(emailErrText(err.message), 'error'); }
+  finally { cb.disabled = false; }
+});
+document.getElementById('emailTypesBody').addEventListener('click', async e => {
+  const b = e.target.closest('[data-email-preview]'); if (b) openEmailPreview(b.dataset.emailPreview, b);
+});
+async function openEmailPreview(kind, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const p = await Api.adminEmailPreview(adminToken, kind);
+    emailPreviewKind = kind;
+    document.getElementById('emailPreviewTitle').textContent = 'ตัวอย่างอีเมล: ' + EMAIL_KIND_TH(kind);
+    document.getElementById('emailPreviewSubject').textContent = p.subject;
+    document.getElementById('emailPreviewFrame').srcdoc = p.html; // sandbox ว่าง = ไม่รันสคริปต์ ไม่ส่งฟอร์ม
+    document.getElementById('emailPreviewText').textContent = p.text;
+    setEmailPreviewMode('html');
+    document.getElementById('emailPreviewModal').hidden = false;
+  } catch (err) { toast(emailErrText(err.message), 'error'); }
+  finally { if (btn) btn.disabled = false; }
+}
+function setEmailPreviewMode(m) {
+  document.querySelectorAll('#emailPreviewMode button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  document.getElementById('emailPreviewFrame').hidden = m !== 'html';
+  document.getElementById('emailPreviewText').hidden = m !== 'text';
+}
+document.getElementById('emailPreviewMode').addEventListener('click', e => { const b = e.target.closest('button[data-m]'); if (b) setEmailPreviewMode(b.dataset.m); });
+document.getElementById('emailPreviewCloseBtn').addEventListener('click', () => { document.getElementById('emailPreviewModal').hidden = true; });
+document.getElementById('emailPreviewModal').addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('emailPreviewModal').hidden = true; });
+document.getElementById('emailPreviewTestBtn').addEventListener('click', async e => {
+  const btn = e.currentTarget; btn.disabled = true;
+  try { const r = await Api.adminEmailTest(adminToken, emailPreviewKind); toast('ส่งอีเมลทดสอบไปที่ ' + r.to + ' แล้ว'); loadEmailCenter(); }
+  catch (err) { toast(emailErrText(err.message), 'error'); }
+  finally { btn.disabled = false; }
+});
+document.getElementById('reminderDryBtn').addEventListener('click', async e => {
+  const btn = e.currentTarget, out = document.getElementById('reminderResult'); btn.disabled = true;
+  try {
+    const r = await Api.adminRunReminders(adminToken, true);
+    out.innerHTML = !r.count ? '<div class="alert alert-info">วันนี้ไม่มีรายการที่ถึงกำหนดแจ้งเตือน</div>' :
+      `<div class="alert alert-info">ถึงกำหนดแจ้งเตือน ${r.count} ฉบับ (ยังไม่ได้ส่ง)</div><div class="table-scroll"><table class="data-table"><thead><tr><th>ผู้ปฏิบัติงาน</th><th>เรื่อง</th><th>วันหมดอายุ</th><th>ขั้น</th><th>อีเมล</th></tr></thead><tbody>` +
+      r.items.map(i => `<tr><td>${escapeHtml(i.name)} <span class="text-soft mono">${escapeHtml(i.PersonID)}</span></td><td>${escapeHtml(EMAIL_KIND_TH(i.kind))}</td><td>${escapeHtml(new Date(i.expireDate + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }))}</td><td>${i.stage ? 'เหลือ ' + i.daysLeft + ' วัน' : 'หมดอายุแล้ว'}</td><td class="mono">${escapeHtml(i.to)}</td></tr>`).join('') + '</tbody></table></div>';
+  } catch (err) { out.innerHTML = `<div class="alert alert-error">${escapeHtml(emailErrText(err.message))}</div>`; }
+  finally { btn.disabled = false; }
+});
+document.getElementById('reminderRunBtn').addEventListener('click', async e => {
+  const btn = e.currentTarget, out = document.getElementById('reminderResult');
+  if (!(await confirmDialog('ส่งอีเมลแจ้งเตือนวันหมดอายุที่ถึงกำหนดทั้งหมดตอนนี้? (รายการที่เคยส่งในขั้นเดียวกันแล้วจะไม่ส่งซ้ำ)', { okText: 'ส่งตอนนี้' }))) return;
+  btn.disabled = true;
+  try {
+    const r = await Api.adminRunReminders(adminToken, false);
+    out.innerHTML = `<div class="alert alert-${r.failed ? 'error' : 'success'}">ส่งแล้ว ${r.sent} ฉบับ · เข้าคิว ${r.queued} · ไม่สำเร็จ ${r.failed}${r.deferred ? ' · เลื่อนไปรอบถัดไป ' + r.deferred + ' (เก็บโควตาไว้ให้รหัส OTP)' : ''}</div>`;
+    loadEmailCenter();
+  } catch (err) { out.innerHTML = `<div class="alert alert-error">${escapeHtml(emailErrText(err.message))}</div>`; }
+  finally { btn.disabled = false; }
+});
